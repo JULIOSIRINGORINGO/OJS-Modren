@@ -1,227 +1,198 @@
-"use client";
+import Link from "next/link";
+import { BookOpen, FileText, UserCheck, CheckSquare, RefreshCw, LogIn, UserPlus, ArrowRight } from "lucide-react";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { CheckCircle, Upload, FileText, AlertCircle } from "lucide-react";
+export const metadata = { title: "Kirim Naskah — FAST-Journal" };
 
-const categories = [
-  "Ilmu Data",
-  "Pemrosesan Bahasa Alami",
-  "Pembelajaran Mesin",
-  "Penglihatan Komputer",
-  "Sistem Terdistribusi",
-  "AI yang Dapat Dijelaskan",
-  "Keamanan Siber",
-  "Rekayasa Perangkat Lunak",
-];
-
-const steps = [
-  { number: 1, title: "Siapkan Naskah", desc: "Format naskah sesuai template jurnal" },
-  { number: 2, title: "Isi Formulir", desc: "Lengkapi metadata dan informasi penulis" },
-  { number: 3, title: "Unggah File", desc: "Unggah naskah dalam format .docx atau .pdf" },
-  { number: 4, title: "Tunggu Konfirmasi", desc: "Tim redaksi akan menghubungi dalam 3 hari kerja" },
+const submissionSteps = [
+  {
+    number: "1",
+    title: "Tahap 1: Persiapan Naskah & Format",
+    bgColor: "bg-purple-100",
+    icon: FileText,
+    details: [
+      "Gunakan berkas format dokumen Microsoft Word (.docx).",
+      "Isi naskah harus ditulis dan diatur ketat mengikuti Template Resmi Jurnal UNPRI.",
+      "Sediakan abstrak singkat antara 150-300 kata dalam Bahasa Indonesia dan Bahasa Inggris.",
+      "Pastikan file naskah utama tidak mencantumkan nama penulis (untuk proses double-blind peer review)."
+    ]
+  },
+  {
+    number: "2",
+    title: "Tahap 2: Registrasi & Masuk Akun",
+    bgColor: "bg-yellow-100",
+    icon: UserCheck,
+    details: [
+      "Penulis wajib memiliki akun aktif di platform FAST-Journal.",
+      "Jika belum memiliki akun, silakan daftar secara gratis melalui menu Daftar Akun.",
+      "Gunakan alamat email aktif yang dapat dihubungi untuk pembaruan status naskah."
+    ]
+  },
+  {
+    number: "3",
+    title: "Tahap 3: Pengajuan Melalui Dashboard",
+    bgColor: "bg-blue-100",
+    icon: CheckSquare,
+    details: [
+      "Masuk ke akun Anda, lalu arahkan ke menu Dashboard Penulis.",
+      "Pilih menu Submissions lalu klik tombol New Submission.",
+      "Isi semua metadata penting seperti Judul, Abstrak, Kata Kunci, serta Kontributor bersama (Co-authors).",
+      "Unggah berkas naskah utama Anda pada kolom pengunggahan file yang tersedia."
+    ]
+  },
+  {
+    number: "4",
+    title: "Tahap 4: Proses Peer-Review & Hasil",
+    bgColor: "bg-emerald-100",
+    icon: RefreshCw,
+    details: [
+      "Tim Editor akan melakukan penyaringan awal (screening) kesesuaian topik dan format.",
+      "Naskah yang lolos screening akan ditinjau secara anonim oleh minimal 2 Reviewer ahli.",
+      "Anda dapat memantau perkembangan tinjauan dan mengunduh revisi langsung dari Dashboard Anda."
+    ]
+  }
 ];
 
 export default function SubmitPage() {
-  const [submitted, setSubmitted] = useState(false);
-  const [category, setCategory] = useState("");
-
-  if (submitted) {
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-24 text-center">
-        <div
-          className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6"
-          style={{ backgroundColor: "rgba(5,150,105,0.1)" }}
-        >
-          <CheckCircle className="w-8 h-8" style={{ color: "#059669" }} />
-        </div>
-        <h2 className="font-serif text-3xl font-bold mb-3" style={{ color: "#09090B" }}>
-          Naskah Berhasil Dikirim!
-        </h2>
-        <p className="font-sans" style={{ color: "#71717A" }}>
-          Terima kasih. Tim redaksi kami akan meninjau naskah Anda dan mengirimkan konfirmasi dalam 3 hari kerja ke alamat email yang Anda daftarkan.
-        </p>
-        <p
-          className="mt-4 text-sm font-sans font-medium px-4 py-2 rounded-lg inline-block"
-          style={{ backgroundColor: "rgba(45,58,140,0.08)", color: "#6366F1" }}
-        >
-          ID Naskah: OJS-2025-{Math.floor(Math.random() * 9000) + 1000}
-        </p>
-      </div>
-    );
-  }
-
   return (
-    <div>
-      {/* Header */}
-      <div style={{ background: "linear-gradient(145deg, #0F0F1A 0%, #1a1a2e 40%, #16213e 100%)" }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <h1 className="font-serif text-4xl font-bold text-white mb-2">Kirim Naskah</h1>
-          <p className="font-sans" style={{ color: "rgba(255,255,255,0.75)" }}>
-            Kirimkan karya ilmiah Anda untuk ditinjau dan diterbitkan
+    <div className="pb-24">
+      {/* Page Header */}
+      <div className="bg-yellow-50 border-b-[3px] border-black py-20 relative overflow-hidden">
+        {/* Decorative Grid Dot Pattern */}
+        <div 
+          className="absolute inset-0 opacity-15"
+          style={{
+            backgroundImage: "radial-gradient(circle, #000 1.5px, transparent 1.5px)",
+            backgroundSize: "24px 24px"
+          }}
+        />
+        
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+          <div
+            className="inline-flex items-center gap-2 rounded-full px-4.5 py-1.5 mb-6 border-2 border-black bg-white shadow-[2px_2px_0px_0px_#000]"
+          >
+            <BookOpen className="w-4 h-4 text-yellow-600 stroke-[2.5px]" />
+            <span className="text-[10px] font-black uppercase tracking-wider text-black">
+              Panduan Penulis
+            </span>
+          </div>
+          <h1 className="font-serif text-4xl sm:text-6xl font-black text-black leading-tight mb-6">
+            PANDUAN & CARA <br className="hidden sm:inline" />
+            <span className="bg-yellow-300 px-3 border-2 border-black inline-block transform rotate-1 shadow-[4px_4px_0px_0px_#000] mt-2">
+              KIRIM NASKAH JURNAL
+            </span>
+          </h1>
+          <p className="text-sm sm:text-base font-bold leading-relaxed text-zinc-700 max-w-2xl mx-auto uppercase tracking-wide">
+            Pelajari alur pengiriman karya ilmiah di FAST-Journal dari persiapan format hingga tahap publikasi akhir.
           </p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          {/* Form */}
-          <div className="lg:col-span-2 space-y-6">
-            <div
-              className="rounded-2xl border p-8"
-              style={{ backgroundColor: "white", borderColor: "#E4E4E7" }}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <FileText className="w-4 h-4" style={{ color: "#6366F1" }} />
-                <h2 className="font-serif text-lg font-semibold" style={{ color: "#09090B" }}>
-                  Informasi Naskah
-                </h2>
+          
+          {/* Left Column: Step-by-Step Guideline */}
+          <div className="lg:col-span-2 space-y-8">
+            <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mb-6 flex items-center gap-2.5">
+              <span className="w-3 h-8 bg-purple-500 border border-black inline-block" />
+              ALUR & CARA PENGIRIMAN
+            </h2>
+            
+            <div className="space-y-6">
+              {submissionSteps.map((step) => {
+                const Icon = step.icon;
+                return (
+                  <div
+                    key={step.number}
+                    className="bg-white border-[3px] border-black p-6 sm:p-8 shadow-[6px_6px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[8px_8px_0px_0px_#000] transition-all relative overflow-hidden"
+                  >
+                    {/* Big Step Number on background */}
+                    <div className="absolute top-4 right-4 sm:top-6 sm:right-6 text-7xl font-black text-zinc-100 select-none z-0">
+                      #{step.number}
+                    </div>
+
+                    <div className="relative z-10">
+                      <div className="flex items-center gap-3.5 mb-5">
+                        <div className={`w-12 h-12 rounded-lg border-2 border-black flex items-center justify-center shadow-[2px_2px_0px_0px_#000] ${step.bgColor}`}>
+                          <Icon className="w-6 h-6 text-black stroke-[2.5px]" />
+                        </div>
+                        <h3 className="text-lg sm:text-xl font-black uppercase tracking-tight text-black">
+                          {step.title}
+                        </h3>
+                      </div>
+                      
+                      <ul className="space-y-3.5">
+                        {step.details.map((detail, idx) => (
+                          <li key={idx} className="flex items-start gap-2.5">
+                            <span className="w-2 h-2 rounded-full bg-black shrink-0 mt-2" />
+                            <p className="text-xs sm:text-sm font-bold text-zinc-600 uppercase tracking-wide">
+                              {detail}
+                            </p>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Right Column: Alert & Quick Links */}
+          <div className="space-y-8">
+            {/* Login Notice Box */}
+            <div className="bg-purple-100 border-[3px] border-black p-8 shadow-[6px_6px_0px_0px_#000] relative">
+              <div className="absolute top-0 right-0 w-16 h-16 bg-purple-200 border-l-2 border-b-2 border-black rounded-bl-2xl opacity-50 flex items-center justify-center">
+                <LogIn className="w-6 h-6 text-black stroke-[2.5px]" />
               </div>
-              <p className="text-xs font-sans mb-6" style={{ color: "#71717A" }}>
-                Lengkapi semua kolom di bawah ini
+              
+              <h3 className="text-xl font-black uppercase tracking-tight text-black mb-4">
+                MEMERLUKAN LOGIN PENULIS
+              </h3>
+              
+              <p className="text-xs sm:text-sm font-bold leading-relaxed text-zinc-700 uppercase tracking-wide mb-6">
+                Untuk alasan keamanan dan penelusuran draf berkas secara mandiri, pengiriman naskah utama tidak dapat dilakukan secara anonim melalui halaman publik. 
+                <br /><br />
+                Anda harus **masuk ke akun penulis** Anda terlebih dahulu untuk mengunggah naskah.
               </p>
 
-              <div className="space-y-5">
-                <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">Judul Naskah *</Label>
-                  <Input placeholder="Masukkan judul lengkap naskah Anda..." className="font-sans" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">Abstrak *</Label>
-                  <Textarea
-                    placeholder="Tulis abstrak naskah (150–300 kata)..."
-                    className="font-sans resize-none"
-                    style={{ minHeight: "120px" }}
-                  />
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Nama Penulis *</Label>
-                    <Input placeholder="Nama lengkap penulis utama" className="font-sans" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Institusi *</Label>
-                    <Input placeholder="Nama universitas / lembaga" className="font-sans" />
-                  </div>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">Email Korespondensi *</Label>
-                  <Input type="email" placeholder="email@institusi.ac.id" className="font-sans" />
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">Bidang Ilmu *</Label>
-                  <Select onValueChange={(v) => setCategory(v ?? "")} value={category}>
-                    <SelectTrigger className="font-sans text-sm">
-                      <SelectValue placeholder="Pilih kategori yang sesuai..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">Kata Kunci *</Label>
-                  <Input
-                    placeholder="Pisahkan dengan koma (maks. 6 kata kunci)"
-                    className="font-sans"
-                  />
-                </div>
-
-                {/* File Upload */}
-                <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">Unggah Berkas Naskah *</Label>
-                  <div
-                    className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer transition-colors"
-                    style={{ borderColor: "#E4E4E7" }}
-                  >
-                    <Upload className="w-8 h-8 mx-auto mb-2" style={{ color: "#9CA3AF" }} />
-                    <p className="text-sm font-sans font-medium" style={{ color: "#374151" }}>
-                      Klik untuk unggah atau seret file ke sini
-                    </p>
-                    <p className="text-xs font-sans mt-1" style={{ color: "#9CA3AF" }}>
-                      Format: .docx, .pdf (Maks. 10 MB)
-                    </p>
-                  </div>
-                </div>
-
-                <Button
-                  className="w-full text-white font-sans"
-                  style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)", boxShadow: "0 2px 8px rgba(99,102,241,0.3)" }}
-                  onClick={() => setSubmitted(true)}
+              <div className="space-y-3">
+                <Link
+                  href="/masuk"
+                  className="w-full inline-flex h-11 items-center justify-center rounded-xl border-[3px] border-black bg-primary text-primary-foreground font-black uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] transition-all gap-2"
                 >
-                  Kirim Naskah
-                </Button>
+                  <LogIn className="w-4 h-4 stroke-[2.5px]" />
+                  MASUK KE AKUN
+                </Link>
+                
+                <Link
+                  href="/daftar"
+                  className="w-full inline-flex h-11 items-center justify-center rounded-xl border-[3px] border-black bg-white text-black font-black uppercase tracking-wider text-xs shadow-[3px_3px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[4px_4px_0px_0px_#000] transition-all gap-2"
+                >
+                  <UserPlus className="w-4 h-4 stroke-[2.5px]" />
+                  DAFTAR AKUN BARU
+                </Link>
               </div>
             </div>
-          </div>
 
-          {/* Sidebar */}
-          <div className="space-y-5">
-            <div
-              className="rounded-2xl border p-6"
-              style={{ backgroundColor: "white", borderColor: "#E4E4E7" }}
-            >
-              <h3 className="font-serif text-base font-semibold mb-4" style={{ color: "#09090B" }}>
-                Proses Pengiriman
+            {/* Template Shortcut Box */}
+            <div className="bg-white border-[3px] border-black p-8 shadow-[6px_6px_0px_0px_#000]">
+              <h3 className="text-lg font-black uppercase tracking-tight text-black mb-3">
+                SUDAH PUNYA TEMPLATE?
               </h3>
-              <div className="space-y-4">
-                {steps.map((step) => (
-                  <div key={step.number} className="flex gap-3">
-                    <div
-                      className="w-6 h-6 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white font-sans"
-                      style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)" }}
-                    >
-                      {step.number}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold font-sans" style={{ color: "#09090B" }}>
-                        {step.title}
-                      </p>
-                      <p className="text-xs font-sans" style={{ color: "#71717A" }}>
-                        {step.desc}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            <div
-              className="rounded-2xl border p-6"
-              style={{ backgroundColor: "rgba(255,251,235,0.8)", borderColor: "#FDE68A" }}
-            >
-              <div className="flex items-start gap-2">
-                <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" style={{ color: "#D97706" }} />
-                <div>
-                  <p className="text-sm font-semibold font-sans" style={{ color: "#92400E" }}>
-                    Perhatian
-                  </p>
-                  <p className="text-xs font-sans mt-1 leading-relaxed" style={{ color: "#78350F" }}>
-                    Pastikan naskah belum pernah diterbitkan atau sedang dalam proses review di jurnal lain. Pengiriman ganda akan otomatis ditolak.
-                  </p>
-                </div>
-              </div>
+              <p className="text-xs font-bold leading-relaxed text-zinc-500 uppercase tracking-wide mb-5">
+                Pastikan tulisan naskah Anda sudah rapi dan sesuai standar jurnal UNPRI sebelum mengunggah draf final.
+              </p>
+              
+              <Link
+                href="/template"
+                className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wider text-purple-600 hover:text-purple-800 hover:underline transition-colors group"
+              >
+                UNDUH TEMPLATE RESMI SEKARANG
+                <ArrowRight className="w-4 h-4 transform group-hover:translate-x-1 transition-transform stroke-[2.5px]" />
+              </Link>
             </div>
           </div>
+
         </div>
       </div>
     </div>

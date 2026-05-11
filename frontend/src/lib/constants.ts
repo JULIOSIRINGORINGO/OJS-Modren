@@ -5,4 +5,6 @@ export const NAV_LINKS = [
   { label: "Terbitan", href: "/issues" },
   { label: "Kirim Naskah", href: "/submit" },
   { label: "Kontak", href: "/contact" },
+  { label: "Download Template", href: "/template" },
 ];
+
