@@ -2,11 +2,13 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
 import { BookOpen, Menu, X, ArrowRight } from "lucide-react";
 import { NAV_LINKS, SITE_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -39,16 +41,24 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Nav */}
-        <div className="hidden md:flex items-center gap-1">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-[11px] font-black uppercase tracking-wider px-3.5 py-2 rounded-lg text-foreground hover:text-primary transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="hidden md:flex items-center gap-2">
+          {NAV_LINKS.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "text-[11px] font-black uppercase tracking-wider px-3.5 py-2 rounded-lg transition-all border-2",
+                  isActive
+                    ? "border-black bg-purple-300 text-black shadow-[2px_2px_0px_0px_#000]"
+                    : "border-transparent text-foreground hover:text-primary hover:bg-purple-50"
+                )}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Auth Buttons */}
@@ -81,22 +91,30 @@ export function Navbar() {
       {/* Mobile Menu */}
       {mobileOpen && (
         <div
-          className="md:hidden border-t-3 border-black px-4 py-4 space-y-1.5 bg-card"
+          className="md:hidden border-t-3 border-black px-4 py-4 space-y-1.5 bg-card animate-in fade-in-50 duration-200"
         >
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="block text-[11px] font-black uppercase tracking-wider py-2.5 px-3 rounded-lg text-foreground hover:bg-purple-50 dark:hover:bg-purple-950/10 transition-colors"
-              onClick={() => setMobileOpen(false)}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {NAV_LINKS.map((link) => {
+            const isActive = pathname === link.href;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={cn(
+                  "block text-[11px] font-black uppercase tracking-wider py-2.5 px-3 rounded-lg transition-all border-2",
+                  isActive
+                    ? "border-black bg-purple-300 text-black shadow-[2px_2px_0px_0px_#000]"
+                    : "border-transparent text-foreground hover:bg-purple-50"
+                )}
+                onClick={() => setMobileOpen(false)}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           <div className="flex gap-3 pt-4 border-t-2 border-sidebar-border">
             <Link
               href="/masuk"
-              className="flex-1 inline-flex h-10 items-center justify-center rounded-xl border-2 border-black bg-white text-black font-black uppercase tracking-wider text-[11px] shadow-[2px_2px_0px_0px_#000000] hover:bg-zinc-50"
+              className="flex-1 inline-flex h-10 items-center justify-center rounded-xl border-2 border-black bg-white text-black font-black uppercase tracking-wider text-[11px] shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-50"
               onClick={() => setMobileOpen(false)}
             >
               Masuk
