@@ -15,6 +15,8 @@ Halaman utama dan seluruh halaman publik tamu (*About*, *Submit*, *Contact*, dan
 1. **Disrupsi Visual yang Berani (Visual Disruption)**: Jurnal ilmiah tradisional biasanya memiliki desain monoton yang membosankan. Gaya Neo-Brutalisme yang berciri khas **garis tepi hitam yang tebal (`border-[3px] border-black`)**, **bayangan datar yang pekat (`shadow-[4px_4px_0px_0px_#000]`)**, serta **sudut-sudut kaku** memberikan identitas visual yang kuat, berani, dan langsung menarik perhatian pada pandangan pertama.
 2. **Keterbacaan Berkinerja Tinggi**: Penggunaan tipografi sans-serif berbobot sangat tebal (*heavy bold sans*) dan teks huruf besar (*uppercase tags*) memastikan setiap informasi penting, tombol, dan kategori mudah dibaca dan dinavigasi dengan cepat (*high accessibility*).
 3. **Sentuhan Interaktif & Taktil**: Setiap kartu informasi dirancang seolah-olah tombol fisik yang bisa ditekan. Saat kursor diarahkan (*hover*), kartu akan bergeser secara halus (`hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#000]`), meningkatkan keterlibatan interaksi pengguna (*micro-interactions*).
+4. **Daya Tarik Gen-Z & Estetika Nyentrik (Youth Appeal)**: Generasi muda masa kini (Gen-Z)—yang mencakup mayoritas mahasiswa aktif, peneliti pemula, dan akademisi baru—jauh lebih antusias terhadap visual yang **nyentrik, ekspresif, dan estetik**. Menghadirkan antarmuka Neo-Brutalisme meruntuhkan stigma kuno bahwa portal jurnal ilmiah harus selalu kaku dan membosankan, sekaligus memicu gairah generasi muda untuk rajin membaca dan menerbitkan karya ilmiah mereka.
+
 
 ### 💜 Filosofi Tema Warna: UNPRI Purple & Pastel Accents
 
