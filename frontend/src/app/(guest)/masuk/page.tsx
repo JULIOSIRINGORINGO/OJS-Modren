@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BookOpen, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { SITE_NAME } from "@/lib/constants";
 
 export default function MasukPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,8 +22,9 @@ export default function MasukPage() {
             <BookOpen className="w-6 h-6 text-black stroke-[2.5px]" />
           </div>
           <h1 className="text-2xl font-black uppercase tracking-wider text-foreground">
-            Masuk ke Modern OJS
+            Masuk ke {SITE_NAME}
           </h1>
+
           <p className="text-[12px] font-bold text-muted-foreground uppercase tracking-wider mt-2">
             Belum punya akun?{" "}
             <Link href="/daftar" className="font-black text-primary hover:underline">
