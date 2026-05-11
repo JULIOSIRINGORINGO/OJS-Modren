@@ -6,13 +6,22 @@ Platform pengelolaan dan publikasi jurnal akademik modern yang dirancang khusus 
 
 ## ✨ Tentang Proyek
 
-**Modern OJS** adalah inisiatif modernisasi sistem jurnal akademik tradisional menjadi sebuah platform berestetika **Hybrid Premium SaaS Workstation**. Berbeda dengan tampilan OJS klasik yang cenderung kaku, Modern OJS menyajikan antarmuka pengguna yang responsif, dinamis, serta mengutamakan kenyamanan membaca dan produktivitas penulis serta reviewer.
+**Modern OJS** adalah inisiatif modernisasi sistem jurnal akademik tradisional menjadi sebuah platform berestetika **Hybrid Premium SaaS Workstation**. Berbeda dengan tampilan OJS klasik yang cenderung kaku, kusam, dan usang, Modern OJS menyajikan antarmuka pengguna yang responsif, dinamis, serta sangat memanjakan mata pembaca maupun tim redaksi.
 
-### 💜 Filosofi Tema Warna: UNPRI Purple
+### ⚡ Gaya Estetika: Neo-Brutalisme (Neo-Brutalist Design)
 
-Sistem ini didesain menggunakan palet warna dominan **Ungu Deep & Vibrant** (`#4F46E5` / `#6D28D9` / `#7C3AED`). Pilihan warna ini bukanlah tanpa alasan:
-* **Identitas Universitas Prima Indonesia (UNPRI)**: Warna ungu merupakan warna kebanggaan dan identitas resmi dari **UNPRI**. Desain ini dirancang sebagai bentuk dedikasi dan keselarasan visual dengan identitas institusi kampus UNPRI.
-* **Asetika Editorial Premium**: Kombinasi gradasi ungu tua melambangkan profesionalisme akademis yang mewah, dipadukan dengan permukaan kerja putih bersih (*crisp white surfaces*) untuk memastikan kenyamanan membaca artikel dalam waktu lama tanpa membuat mata lelah (*Zero-Eye-Strain*).
+Halaman utama dan seluruh halaman publik tamu (*About*, *Submit*, *Contact*, dan *Download Template*) dirancang penuh menggunakan gaya **Neo-Brutalisme**. Alasan pemilihan gaya desain mutakhir ini meliputi:
+
+1. **Disrupsi Visual yang Berani (Visual Disruption)**: Jurnal ilmiah tradisional biasanya memiliki desain monoton yang membosankan. Gaya Neo-Brutalisme yang berciri khas **garis tepi hitam yang tebal (`border-[3px] border-black`)**, **bayangan datar yang pekat (`shadow-[4px_4px_0px_0px_#000]`)**, serta **sudut-sudut kaku** memberikan identitas visual yang kuat, berani, dan langsung menarik perhatian pada pandangan pertama.
+2. **Keterbacaan Berkinerja Tinggi**: Penggunaan tipografi sans-serif berbobot sangat tebal (*heavy bold sans*) dan teks huruf besar (*uppercase tags*) memastikan setiap informasi penting, tombol, dan kategori mudah dibaca dan dinavigasi dengan cepat (*high accessibility*).
+3. **Sentuhan Interaktif & Taktil**: Setiap kartu informasi dirancang seolah-olah tombol fisik yang bisa ditekan. Saat kursor diarahkan (*hover*), kartu akan bergeser secara halus (`hover:-translate-y-0.5 hover:shadow-[6px_6px_0px_0px_#000]`), meningkatkan keterlibatan interaksi pengguna (*micro-interactions*).
+
+### 💜 Filosofi Tema Warna: UNPRI Purple & Pastel Accents
+
+Sistem ini didesain secara khusus menyelaraskan identitas resmi kampus dengan aksen warna modern:
+* **Ungu Utama Universitas Prima Indonesia (UNPRI)**: Warna ungu merupakan warna kebanggaan dan identitas resmi dari **UNPRI**. Kami menggunakan palet ungu premium (`#6D28D9` / `#7C3AED`) sebagai penegas identitas kampus pada komponen utama seperti tombol pendaftaran, ikon rujukan, dan sorotan tajuk.
+* **Aksen Pastel Kontras Tinggi**: Dipadukan dengan warna-warna pastel Neo-Brutalis yang lembut namun kontras (seperti kuning pastel, biru langit pastel, dan emerald/mint pastel) untuk memberikan nuansa segar, menyenangkan, namun tetap mempertahankan fungsionalitas akademis yang terstruktur rapi.
+
 
 ---
 
