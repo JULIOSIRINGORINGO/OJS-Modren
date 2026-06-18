@@ -1,17 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { ArticleCard } from "@/components/shared/ArticleCard";
 import { SkeletonCard } from "@/components/shared/SkeletonCard";
-import { mockArticles } from "@/lib/mock-data";
+import { fetchArticles } from "@/lib/api-client";
+import type { Article } from "@/types";
 import { Button } from "@/components/ui/button";
 import { ArrowDown } from "lucide-react";
 
 export function LatestIssueGrid() {
-  const [loading] = useState(false);
-  const published = mockArticles.filter((a) => a.status === "Published");
+  const [loading, setLoading] = useState(true);
+  const [articles, setArticles] = useState<Article[]>([]);
+
+  useEffect(() => {
+    fetchArticles().then((res) => {
+      setArticles(res);
+      setLoading(false);
+    });
+  }, []);
 
   return (
     <section className="bg-purple-50/20 dark:bg-purple-950/5 border-t-[3px] border-black">
@@ -54,7 +62,7 @@ export function LatestIssueGrid() {
               visible: { transition: { staggerChildren: 0.05 } },
             }}
           >
-            {published.map((article) => (
+            {articles.map((article) => (
               <motion.div
                 key={article.id}
                 variants={{

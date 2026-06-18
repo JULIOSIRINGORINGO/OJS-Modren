@@ -1,8 +1,12 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import { Eye, Download, ArrowUpRight } from "lucide-react";
+import { Eye, Download, ArrowUpRight, FileText } from "lucide-react";
 import type { Article } from "@/types";
 import { cn } from "@/lib/utils";
+import { trackArticleDownload } from "@/lib/api-client";
 
 const categoryBg: Record<string, string> = {
   "Ilmu Data": "bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-200",
@@ -15,6 +19,28 @@ const categoryBg: Record<string, string> = {
 
 export function ArticleCard({ article }: { article: Article }) {
   const badgeClass = categoryBg[article.category] ?? "bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-200";
+  const [downloads, setDownloads] = useState(article.downloads || 0);
+
+  const handleDownload = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // If a real PDF file was uploaded, open from backend server
+    if (article.file_url && article.file_name?.toLowerCase().endsWith('.pdf')) {
+      window.open(`http://localhost:3001${article.file_url}`, "_blank");
+    } else {
+      // Fallback to generated PDF galley page
+      window.open(`/articles/${article.id}/pdf`, "_blank");
+    }
+
+    trackArticleDownload(article.id)
+      .then((res) => {
+        if (res.success) {
+          setDownloads(res.downloads);
+        }
+      })
+      .catch((err) => console.error(err));
+  };
 
   return (
     <div
@@ -53,20 +79,25 @@ export function ArticleCard({ article }: { article: Article }) {
         <div
           className="flex items-center justify-between mt-auto pt-3 border-t-2 border-sidebar-border"
         >
-          <p className="text-[10px] truncate flex-1 font-black uppercase tracking-wider text-foreground/80">
+          <p className="text-[10px] truncate flex-1 font-black uppercase tracking-wider text-foreground/80 mr-2">
             {article.authors[0]}{article.authors.length > 1 ? ` +${article.authors.length - 1}` : ""}
           </p>
-          <div className="flex items-center gap-3 shrink-0">
-            {article.views !== undefined && (
-              <span className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground/90">
-                <Eye className="w-3.5 h-3.5" /> {article.views.toLocaleString()}
+          <div className="flex items-center gap-2.5 shrink-0">
+            <button
+              onClick={handleDownload}
+              className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wider border-2 border-black bg-red-100 hover:bg-red-200 text-black shadow-[1.5px_1.5px_0px_0px_#000] hover:translate-x-[-0.5px] hover:translate-y-[-0.5px] hover:shadow-[2px_2px_0px_0px_#000] active:translate-x-0 active:translate-y-0 active:shadow-none transition-all rounded"
+            >
+              <FileText className="w-3.5 h-3.5 text-red-650" />
+              PDF
+            </button>
+            <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground/90 ml-1">
+              <span className="flex items-center gap-0.5">
+                <Eye className="w-3 h-3" /> {article.views !== undefined ? article.views.toLocaleString('id-ID') : 0}
               </span>
-            )}
-            {article.downloads !== undefined && (
-              <span className="flex items-center gap-1 text-[11px] font-bold text-muted-foreground/90">
-                <Download className="w-3.5 h-3.5" /> {article.downloads.toLocaleString()}
+              <span className="flex items-center gap-0.5">
+                <Download className="w-3 h-3" /> {downloads.toLocaleString('id-ID')}
               </span>
-            )}
+            </div>
           </div>
         </div>
       </div>

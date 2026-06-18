@@ -128,7 +128,7 @@ export default function ContactPage() {
               {
                 icon: Mail,
                 label: "Email Redaksi",
-                value: "redaksi@modernojs.id",
+                value: "redaksi@fastjournal.id",
                 sub: "Untuk bantuan administrasi jurnal",
                 bgColor: "bg-purple-100",
               },

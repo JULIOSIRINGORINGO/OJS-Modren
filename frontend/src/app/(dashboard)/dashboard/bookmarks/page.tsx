@@ -1,8 +1,8 @@
+"use client";
+
 import { Bookmark } from "lucide-react";
 import { BookmarkGallery } from "@/components/dashboard/BookmarkGallery";
 import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
-
-export const metadata = { title: "Penanda" };
 
 export default function BookmarksPage() {
   return (

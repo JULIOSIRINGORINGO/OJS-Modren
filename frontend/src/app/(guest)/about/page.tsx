@@ -60,7 +60,7 @@ export default function AboutPage() {
           >
             <BookOpen className="w-4 h-4 text-purple-600 stroke-[2.5px]" />
             <span className="text-[10px] font-black uppercase tracking-wider text-black">
-              Tentang Modern OJS
+              Tentang FAST-Journal
             </span>
           </div>
           <h1 className="font-serif text-4xl sm:text-6xl font-black text-black leading-tight mb-6">

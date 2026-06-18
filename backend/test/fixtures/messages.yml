@@ -1,0 +1,14 @@
+# Message fixtures for tests
+one:
+  sender: editor_user
+  receiver: author_user
+  subject: "Pengantar Naskah"
+  body: "Selamat, naskah Anda telah terkirim."
+  read: false
+
+two:
+  sender: author_user
+  receiver: editor_user
+  subject: "Tanya Format"
+  body: "Bagaimana dengan format tabel?"
+  read: true

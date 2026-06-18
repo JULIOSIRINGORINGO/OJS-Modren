@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, FileText, Bookmark, Users,
   Settings, BookOpen, ChevronRight, LogOut,
   PanelLeftClose, PanelLeft, UploadCloud, MessageSquare, User, HelpCircle,
-  Library, Tag
+  Library, Tag, ClipboardCheck, History
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { getCurrentUser, logout } from "@/lib/api-client";
 
 const authorNavItems = [
   { label: "Ikhtisar", href: "/dashboard", icon: LayoutDashboard },
@@ -23,11 +25,21 @@ const authorNavItems = [
   { label: "Bantuan", href: "/dashboard/help", icon: HelpCircle },
 ];
 
+const reviewerNavItems = [
+  { label: "Ikhtisar", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Tinjauan Saya", href: "/dashboard/reviews", icon: ClipboardCheck },
+  { label: "Riwayat Tinjauan", href: "/dashboard/reviews?filter=completed", icon: History },
+  { label: "Profil Saya", href: "/dashboard/profile", icon: User },
+  { label: "Bantuan", href: "/dashboard/help", icon: HelpCircle },
+];
+
 const adminNavItems = [
   { label: "Ikhtisar", href: "/admin", icon: LayoutDashboard },
   { label: "Naskah", href: "/admin/submissions", icon: FileText },
+  { label: "Pesan & Diskusi", href: "/dashboard/messages", icon: MessageSquare },
   { label: "Edisi Jurnal", href: "/admin/issues", icon: Library },
   { label: "Kategori Jurnal", href: "/admin/categories", icon: Tag },
+  { label: "Template & Panduan", href: "/admin/templates", icon: UploadCloud },
   { label: "Manajemen Pengguna", href: "/admin/users", icon: Users },
   { label: "Pengaturan Jurnal", href: "/admin/settings", icon: Settings },
 ];
@@ -35,14 +47,47 @@ const adminNavItems = [
 const roleLabel: Record<string, string> = {
   Admin: "Administrator", Editor: "Editor",
   Reviewer: "Peninjau", Author: "Penulis", Reader: "Pembaca",
+  admin: "Administrator", editor: "Editor",
+  reviewer: "Peninjau", author: "Penulis", reader: "Pembaca",
 };
 
 export function DashboardSidebar({ role = "Author" }: { role?: string }) {
   const pathname = usePathname();
-  const isAdmin = role === "Admin" || role === "Editor";
-  const navItems = isAdmin ? adminNavItems : authorNavItems;
-  const sectionLabel = isAdmin ? "Administrasi" : "Ruang Saya";
+  const router = useRouter();
   const [collapsed, setCollapsed] = useLocalStorage("sidebar-collapsed", false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    setUser(getCurrentUser());
+  }, []);
+
+  const userRole = user?.role || role;
+  const userName = user ? `${user.first_name || ""} ${user.last_name || ""}`.trim() : "Pengguna";
+  const userInitials = user
+    ? `${(user.first_name || "?")[0]}${(user.last_name || "?")[0]}`.toUpperCase()
+    : "??";
+
+  const isAdmin = role === "Admin" || role === "Editor" || role === "admin" || role === "editor";
+  const isReviewer = userRole === "reviewer" || userRole === "Reviewer";
+
+  let navItems;
+  let sectionLabel;
+  if (isAdmin) {
+    navItems = adminNavItems;
+    sectionLabel = "Administrasi";
+  } else if (isReviewer) {
+    navItems = reviewerNavItems;
+    sectionLabel = "Ruang Peninjau";
+  } else {
+    // Author / Reader - filter out review menu for non-reviewers
+    navItems = authorNavItems.filter(item => item.href !== "/dashboard/reviews");
+    sectionLabel = "Ruang Saya";
+  }
+
+  const handleLogout = () => {
+    logout();
+    router.push("/masuk");
+  };
 
   return (
     <aside
@@ -69,7 +114,7 @@ export function DashboardSidebar({ role = "Author" }: { role?: string }) {
               overflow: "hidden",
             }}
           >
-            {isAdmin ? "Admin Panel" : "Modern OJS"}
+            FAST-Journal
           </span>
         </Link>
       </div>
@@ -91,11 +136,14 @@ export function DashboardSidebar({ role = "Author" }: { role?: string }) {
       <div className="p-3 border-t-[3px] border-sidebar-border">
         <div className="flex items-center gap-3 p-2 rounded-xl cursor-pointer hover:bg-white/10 transition-colors group">
           <Avatar className="w-8 h-8 shrink-0 border-2 border-sidebar-border shadow-sm">
+            {user?.avatar && (
+              <AvatarImage src={user.avatar} className="object-cover" />
+            )}
             <AvatarFallback
               className="text-indigo-950 text-[11px] font-black"
               style={{ background: "linear-gradient(135deg, #E0E7FF, #FAE8FF)" }}
             >
-              AP
+              {userInitials}
             </AvatarFallback>
           </Avatar>
           <div
@@ -107,16 +155,20 @@ export function DashboardSidebar({ role = "Author" }: { role?: string }) {
             }}
           >
             <p className="text-[12px] font-black uppercase tracking-wide truncate text-white">
-              Andi Prasetyo
+              {userName}
             </p>
             <p className="text-[10px] font-bold truncate text-purple-200">
-              {roleLabel[role] ?? role}
+              {roleLabel[userRole] ?? userRole}
             </p>
           </div>
           {!collapsed && (
-            <LogOut
-              className="w-4 h-4 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity text-rose-400 hover:text-rose-300"
-            />
+            <button
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg hover:bg-white/10 text-purple-300 hover:text-rose-400 transition-colors ml-auto shrink-0"
+              title="Keluar"
+            >
+              <LogOut className="w-4 h-4" />
+            </button>
           )}
         </div>
       </div>
@@ -162,12 +214,43 @@ function NavItem({
   item,
   active,
   collapsed,
+  onClick,
 }: {
   item: { label: string; href: string; icon: React.ElementType };
   active: boolean;
   collapsed: boolean;
+  onClick?: () => void;
 }) {
   const Icon = item.icon;
+
+  if (onClick) {
+    return (
+      <button
+        onClick={onClick}
+        title={collapsed ? item.label : undefined}
+        className={cn(
+          "w-full flex items-center rounded-xl mb-1.5 text-[11px] font-black transition-all duration-200 group relative uppercase tracking-wider text-left border-2 border-transparent",
+          collapsed ? "justify-center h-10 w-10 mx-auto" : "gap-3 px-3.5 py-2.5",
+          "text-rose-300 hover:bg-rose-950/30 hover:text-rose-200"
+        )}
+      >
+        <Icon
+          className="w-4 h-4 shrink-0 transition-transform group-hover:scale-105 text-rose-400 group-hover:text-rose-300"
+        />
+        <span
+          className="transition-all duration-300 truncate font-semibold"
+          style={{
+            opacity: collapsed ? 0 : 1,
+            maxWidth: collapsed ? 0 : "150px",
+            overflow: "hidden",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {item.label}
+        </span>
+      </button>
+    );
+  }
 
   return (
     <Link

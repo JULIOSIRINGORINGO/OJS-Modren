@@ -1,20 +1,99 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
-import { Settings, CheckCircle } from "lucide-react";
+import { Settings, CheckCircle, Loader2 } from "lucide-react";
 import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
+import { fetchSetting, updateSetting } from "@/lib/api-client";
 
 export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+  // Journal Identity States
+  const [journalName, setJournalName] = useState("FAST-Journal");
+  const [journalAbbr, setJournalAbbr] = useState("FASTJ");
+  const [journalDesc, setJournalDesc] = useState("Platform modern untuk penerbitan akademik, tinjauan sejawat, dan diseminasi akses terbuka.");
+  const [issnPrint, setIssnPrint] = useState("2580-1234");
+  const [issnOnline, setIssnOnline] = useState("2580-5678");
+
+  // Publication States
+  const [currentVolume, setCurrentVolume] = useState("12");
+  const [currentIssue, setCurrentIssue] = useState("2");
+  const [editorialEmail, setEditorialEmail] = useState("redaksi@fastjournal.id");
+
+  // Peer Review States
+  const [reviewersPerManuscript, setReviewersPerManuscript] = useState("2");
+  const [reviewDurationDays, setReviewDurationDays] = useState("30");
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const name = await fetchSetting("journal_name");
+        if (name) setJournalName(name);
+
+        const abbr = await fetchSetting("journal_abbr");
+        if (abbr) setJournalAbbr(abbr);
+
+        const desc = await fetchSetting("journal_desc");
+        if (desc) setJournalDesc(desc);
+
+        const print = await fetchSetting("issn_print");
+        if (print) setIssnPrint(print);
+
+        const online = await fetchSetting("issn_online");
+        if (online) setIssnOnline(online);
+
+        const volume = await fetchSetting("current_volume");
+        if (volume) setCurrentVolume(volume);
+
+        const issue = await fetchSetting("current_issue");
+        if (issue) setCurrentIssue(issue);
+
+        const email = await fetchSetting("editorial_email");
+        if (email) setEditorialEmail(email);
+
+        const reviewers = await fetchSetting("reviewers_per_manuscript");
+        if (reviewers) setReviewersPerManuscript(reviewers);
+
+        const duration = await fetchSetting("review_duration_days");
+        if (duration) setReviewDurationDays(duration);
+      } catch (err) {
+        console.error("Failed to load settings:", err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    loadSettings();
+  }, []);
+
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await Promise.all([
+        updateSetting("journal_name", journalName),
+        updateSetting("journal_abbr", journalAbbr),
+        updateSetting("journal_desc", journalDesc),
+        updateSetting("issn_print", issnPrint),
+        updateSetting("issn_online", issnOnline),
+        updateSetting("current_volume", currentVolume),
+        updateSetting("current_issue", currentIssue),
+        updateSetting("editorial_email", editorialEmail),
+        updateSetting("reviewers_per_manuscript", reviewersPerManuscript),
+        updateSetting("review_duration_days", reviewDurationDays),
+      ]);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 3000);
+    } catch (err) {
+      console.error("Failed to save settings:", err);
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -31,116 +110,162 @@ export default function SettingsPage() {
               className="flex items-center gap-2 p-4 rounded-xl mb-6 border"
               style={{ backgroundColor: "rgba(5,150,105,0.06)", borderColor: "rgba(5,150,105,0.2)" }}
             >
-              <CheckCircle className="w-4 h-4" style={{ color: "#E2E8F0" }} />
+              <CheckCircle className="w-4 h-4 text-emerald-600" />
               <p className="text-sm font-medium font-sans" style={{ color: "#065F46" }}>
-                Pengaturan berhasil disimpan.
+                Pengaturan berhasil disimpan ke Database.
               </p>
             </div>
           )}
 
-          <div className="space-y-6">
-            {/* Identitas Jurnal */}
-            <div
-              className="bg-white/95 backdrop-blur-xl rounded-2xl border p-6 transition-all duration-300 shadow-sm"
-              style={{ borderColor: "rgba(139, 92, 246, 0.15)" }}
-            >
-              <h2 className="font-serif text-base font-semibold mb-4" style={{ color: "#09090B" }}>
-                Identitas Jurnal
-              </h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Nama Jurnal</Label>
-                    <Input defaultValue="Modern OJS" className="font-sans" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Singkatan</Label>
-                    <Input defaultValue="MOJS" className="font-sans" />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">Deskripsi Jurnal</Label>
-                  <Textarea
-                    defaultValue="Platform modern untuk penerbitan akademik, tinjauan sejawat, dan diseminasi akses terbuka."
-                    className="font-sans resize-none"
-                    style={{ minHeight: "80px" }}
-                  />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">ISSN (Cetak)</Label>
-                    <Input defaultValue="2580-1234" className="font-sans" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">ISSN (Online)</Label>
-                    <Input defaultValue="2580-5678" className="font-sans" />
-                  </div>
-                </div>
-              </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-24">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+              <span className="ml-3 text-sm font-bold text-muted-foreground">Memuat pengaturan...</span>
             </div>
-
-            <Separator />
-
-            {/* Pengaturan Publikasi */}
-            <div
-              className="bg-white/95 backdrop-blur-xl rounded-2xl border p-6 transition-all duration-300 shadow-sm"
-              style={{ borderColor: "rgba(139, 92, 246, 0.15)" }}
-            >
-              <h2 className="font-serif text-base font-semibold mb-4" style={{ color: "#09090B" }}>
-                Pengaturan Publikasi
-              </h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Volume Saat Ini</Label>
-                    <Input defaultValue="12" className="font-sans" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Edisi Saat Ini</Label>
-                    <Input defaultValue="2" className="font-sans" />
-                  </div>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="font-sans text-sm">Email Redaksi</Label>
-                  <Input defaultValue="redaksi@modernojs.id" type="email" className="font-sans" />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Pengaturan Tinjauan */}
-            <div
-              className="bg-white/95 backdrop-blur-xl rounded-2xl border p-6 transition-all duration-300 shadow-sm"
-              style={{ borderColor: "rgba(139, 92, 246, 0.15)" }}
-            >
-              <h2 className="font-serif text-base font-semibold mb-4" style={{ color: "#09090B" }}>
-                Konfigurasi Tinjauan Sejawat
-              </h2>
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Jumlah Peninjau per Naskah</Label>
-                    <Input defaultValue="2" className="font-sans" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="font-sans text-sm">Batas Waktu Tinjauan (hari)</Label>
-                    <Input defaultValue="30" className="font-sans" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-end">
-              <Button
-                className="text-white font-sans px-8"
-                style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)", boxShadow: "0 2px 8px rgba(99,102,241,0.3)" }}
-                onClick={handleSave}
+          ) : (
+            <div className="space-y-6">
+              {/* Identitas Jurnal */}
+              <div
+                className="bg-white/95 backdrop-blur-xl rounded-2xl border p-6 transition-all duration-300 shadow-sm"
+                style={{ borderColor: "rgba(139, 92, 246, 0.15)" }}
               >
-                Simpan Pengaturan
-              </Button>
+                <h2 className="font-serif text-base font-semibold mb-4" style={{ color: "#09090B" }}>
+                  Identitas Jurnal
+                </h2>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Nama Jurnal</Label>
+                      <Input
+                        value={journalName}
+                        onChange={(e) => setJournalName(e.target.value)}
+                        className="font-sans"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Singkatan</Label>
+                      <Input
+                        value={journalAbbr}
+                        onChange={(e) => setJournalAbbr(e.target.value)}
+                        className="font-sans"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="font-sans text-sm">Deskripsi Jurnal</Label>
+                    <Textarea
+                      value={journalDesc}
+                      onChange={(e) => setJournalDesc(e.target.value)}
+                      className="font-sans resize-none"
+                      style={{ minHeight: "80px" }}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">ISSN (Cetak)</Label>
+                      <Input
+                        value={issnPrint}
+                        onChange={(e) => setIssnPrint(e.target.value)}
+                        className="font-sans"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">ISSN (Online)</Label>
+                      <Input
+                        value={issnOnline}
+                        onChange={(e) => setIssnOnline(e.target.value)}
+                        className="font-sans"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Pengaturan Publikasi */}
+              <div
+                className="bg-white/95 backdrop-blur-xl rounded-2xl border p-6 transition-all duration-300 shadow-sm"
+                style={{ borderColor: "rgba(139, 92, 246, 0.15)" }}
+              >
+                <h2 className="font-serif text-base font-semibold mb-4" style={{ color: "#09090B" }}>
+                  Pengaturan Publikasi
+                </h2>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Volume Saat Ini</Label>
+                      <Input
+                        value={currentVolume}
+                        onChange={(e) => setCurrentVolume(e.target.value)}
+                        className="font-sans"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Edisi Saat Ini</Label>
+                      <Input
+                        value={currentIssue}
+                        onChange={(e) => setCurrentIssue(e.target.value)}
+                        className="font-sans"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="font-sans text-sm">Email Redaksi</Label>
+                    <Input
+                      value={editorialEmail}
+                      onChange={(e) => setEditorialEmail(e.target.value)}
+                      type="email"
+                      className="font-sans"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Pengaturan Tinjauan */}
+              <div
+                className="bg-white/95 backdrop-blur-xl rounded-2xl border p-6 transition-all duration-300 shadow-sm"
+                style={{ borderColor: "rgba(139, 92, 246, 0.15)" }}
+              >
+                <h2 className="font-serif text-base font-semibold mb-4" style={{ color: "#09090B" }}>
+                  Konfigurasi Tinjauan Sejawat
+                </h2>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Jumlah Peninjau per Naskah</Label>
+                      <Input
+                        value={reviewersPerManuscript}
+                        onChange={(e) => setReviewersPerManuscript(e.target.value)}
+                        className="font-sans"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Batas Waktu Tinjauan (hari)</Label>
+                      <Input
+                        value={reviewDurationDays}
+                        onChange={(e) => setReviewDurationDays(e.target.value)}
+                        className="font-sans"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  className="text-white font-sans px-8"
+                  style={{ background: "linear-gradient(135deg, #6366F1, #8B5CF6)", boxShadow: "0 2px 8px rgba(99,102,241,0.3)" }}
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Menyimpan...</> : "Simpan Pengaturan"}
+                </Button>
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

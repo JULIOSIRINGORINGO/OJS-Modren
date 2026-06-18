@@ -1,12 +1,13 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {
   BarChart3, MessageSquare, Brain, Eye, Network, Lightbulb,
 } from "lucide-react";
 import type { Category } from "@/types";
-import { mockCategories } from "@/lib/mock-data";
+import { fetchCategories } from "@/lib/api-client";
 
 const iconMap: Record<string, React.ElementType> = {
   BarChart3, MessageSquare, Brain, Eye, Network, Lightbulb,
@@ -53,6 +54,12 @@ const defaultTheme = {
 };
 
 export function CategoryNav() {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    fetchCategories().then(setCategories);
+  }, []);
+
   return (
     <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
       <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4 mb-12">
@@ -81,7 +88,7 @@ export function CategoryNav() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-5">
-        {mockCategories.map((cat: Category, i: number) => {
+        {categories.map((cat: Category, i: number) => {
           const Icon = iconMap[cat.icon] || Brain;
           const theme = categoryThemes[cat.name] || defaultTheme;
 

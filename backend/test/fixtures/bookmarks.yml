@@ -1,0 +1,8 @@
+# Bookmark fixtures for tests
+one:
+  user: author_user
+  article: one
+
+two:
+  user: editor_user
+  article: two

@@ -1,8 +1,22 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { BookOpen, ArrowUpRight } from "lucide-react";
 import { SITE_NAME } from "@/lib/constants";
+import { fetchSetting } from "@/lib/api-client";
 
 export function Footer() {
+  const [journalName, setJournalName] = useState(SITE_NAME);
+
+  useEffect(() => {
+    fetchSetting("journal_name")
+      .then((val) => {
+        if (val) setJournalName(val);
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
   return (
     <footer
       className="border-t-[3px] border-black bg-zinc-950 text-zinc-100"
@@ -17,7 +31,7 @@ export function Footer() {
                 <BookOpen className="w-4 h-4 text-white stroke-[2.5px]" />
               </div>
               <span className="font-black text-[14px] uppercase tracking-wider text-white">
-                {SITE_NAME}
+                {journalName}
               </span>
             </div>
             <p className="text-[12px] font-bold text-zinc-400 leading-relaxed uppercase tracking-wider">
@@ -76,7 +90,7 @@ export function Footer() {
           className="mt-12 pt-6 border-t border-zinc-800 flex flex-col sm:flex-row items-center justify-between gap-3"
         >
           <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
-            © {new Date().getFullYear()} {SITE_NAME}. Hak cipta dilindungi.
+            © {new Date().getFullYear()} {journalName}. Hak cipta dilindungi.
           </p>
           <p className="text-[11px] font-bold text-zinc-500 uppercase tracking-wider">
             Didukung oleh Open Journal Systems

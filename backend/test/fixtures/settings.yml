@@ -1,0 +1,8 @@
+# Settings fixtures for tests
+one:
+  key: journal_title
+  value: FAST Journal
+
+two:
+  key: registration_enabled
+  value: "true"

@@ -1,8 +1,8 @@
+"use client";
+
 import { FileText } from "lucide-react";
 import { SubmissionTable } from "@/components/dashboard/SubmissionTable";
 import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
-
-export const metadata = { title: "Naskah Saya" };
 
 export default function MySubmissionsPage() {
   return (

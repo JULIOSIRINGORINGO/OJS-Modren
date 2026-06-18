@@ -29,6 +29,18 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap"
           rel="stylesheet"
         />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('unhandledrejection', function(event) {
+                if (event.reason && (event.reason instanceof Event || event.reason.toString() === '[object Event]')) {
+                  event.preventDefault();
+                  console.warn('Suppressed unhandled rejection of type Event:', event.reason);
+                }
+              });
+            `
+          }}
+        />
       </head>
       <body suppressHydrationWarning>{children}</body>
     </html>

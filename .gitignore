@@ -45,3 +45,10 @@ next-env.d.ts
 AGENTS.md
 CLAUDE.md
 PANDUAN_PRESENTASI_UTS.md
+
+# Rails backend files to ignore
+backend/log/*.log
+backend/tmp/
+backend/db/*.sqlite3*
+backend/public/uploads/
+

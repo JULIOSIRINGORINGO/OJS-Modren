@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { BookOpen, FileSpreadsheet, FileText, FileCode, Download, CheckCircle, ArrowRight } from "lucide-react";
+import { useState, useEffect } from "react";
+import { BookOpen, FileSpreadsheet, FileText, FileCode, Download, CheckCircle, ArrowRight, AlertTriangle } from "lucide-react";
+import { fetchSetting } from "@/lib/api-client";
 
-const templates = [
+const defaultTemplates = [
   {
+    id: "docx",
     title: "Template Naskah (DOCX)",
     desc: "Format Microsoft Word resmi yang wajib digunakan oleh seluruh pengirim naskah di FAST-Journal.",
     size: "142 KB",
@@ -15,6 +17,7 @@ const templates = [
     btnColor: "bg-primary text-primary-foreground",
   },
   {
+    id: "latex",
     title: "Template Naskah (LaTeX)",
     desc: "Paket berkas LaTeX terkompresi lengkap untuk peneliti di bidang Ilmu Komputer atau Kecerdasan Buatan.",
     size: "1.2 MB",
@@ -25,6 +28,7 @@ const templates = [
     btnColor: "bg-yellow-300 text-black",
   },
   {
+    id: "pdf",
     title: "Panduan Gaya Penulisan (PDF)",
     desc: "Berkas PDF detail mengenai struktur artikel, tata cara sitasi, ukuran margin, dan ketentuan gambar.",
     size: "420 KB",
@@ -37,7 +41,42 @@ const templates = [
 ];
 
 export default function TemplatePage() {
+  const [loadedTemplates, setLoadedTemplates] = useState<any[]>([]);
   const [downloadingFile, setDownloadingFile] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      const dbTemplates = await fetchSetting("journal_templates");
+      let dataString = dbTemplates;
+      
+      if (!dataString) {
+        dataString = localStorage.getItem("journal_templates");
+      }
+
+      if (dataString) {
+        try {
+          const parsed = JSON.parse(dataString);
+          const mapped = parsed.map((item: any) => {
+            let icon = FileText;
+            if (item.id === "docx") icon = FileSpreadsheet;
+            else if (item.id === "latex") icon = FileCode;
+            return {
+              ...item,
+              icon,
+              bgColor: item.id === "docx" ? "bg-blue-100" : item.id === "latex" ? "bg-purple-100" : "bg-emerald-100",
+              btnColor: item.id === "docx" ? "bg-primary text-primary-foreground" : item.id === "latex" ? "bg-yellow-300 text-black" : "bg-white text-black",
+            };
+          });
+          setLoadedTemplates(mapped);
+          return;
+        } catch (e) {
+          // fallback
+        }
+      }
+      setLoadedTemplates(defaultTemplates);
+    }
+    loadData();
+  }, []);
 
   const handleDownload = (filename: string) => {
     setDownloadingFile(filename);
@@ -97,8 +136,9 @@ export default function TemplatePage() {
         
         {/* Important Warning */}
         <div className="bg-yellow-100 border-[3px] border-black p-6 mb-12 shadow-[4px_4px_0px_0px_#000] max-w-4xl mx-auto">
-          <h3 className="text-base font-black uppercase tracking-tight text-black mb-1.5">
-            ⚠️ PERINGATAN PENTING SEBELUM MENULIS
+          <h3 className="text-base font-black uppercase tracking-tight text-black mb-1.5 flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-amber-600 stroke-[2.5px] shrink-0" />
+            PERINGATAN PENTING SEBELUM MENULIS
           </h3>
           <p className="text-xs sm:text-sm font-bold leading-relaxed text-zinc-700 uppercase tracking-wide">
             Format naskah yang tidak sesuai dengan template resmi akan **otomatis ditolak** oleh tim editor sebelum masuk ke tahap peer-review. Pastikan Anda telah menyalin artikel Anda ke dalam template Microsoft Word (.docx) di bawah ini dengan tepat.
@@ -107,7 +147,7 @@ export default function TemplatePage() {
 
         {/* Template Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-          {templates.map((tpl) => {
+          {loadedTemplates.map((tpl) => {
             const Icon = tpl.icon;
             return (
               <div

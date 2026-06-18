@@ -1,4 +1,7 @@
+"use client";
+
 import { LucideIcon } from "lucide-react";
+import { NotificationBell } from "@/components/dashboard/NotificationDropdown";
 
 interface DashboardNavbarProps {
   title: string;
@@ -31,11 +34,17 @@ export function DashboardNavbar({ title, subtitle, icon: Icon }: DashboardNavbar
         </div>
       </div>
 
-      <div className="flex items-center gap-2 bg-emerald-400 text-black px-3 py-1 rounded-lg border-2 border-sidebar-border shadow-[2px_2px_0px_0px_var(--neo-shadow-color)]">
-        <div className="h-2 w-2 rounded-full bg-black animate-pulse" />
-        <span className="text-[9px] font-extrabold uppercase tracking-widest text-black">
-          Sistem Aktif
-        </span>
+      <div className="flex items-center gap-3">
+        {/* Notification Bell */}
+        <NotificationBell />
+
+        {/* System Status */}
+        <div className="flex items-center gap-2 bg-emerald-400 text-black px-3 py-1 rounded-lg border-2 border-sidebar-border shadow-[2px_2px_0px_0px_var(--neo-shadow-color)]">
+          <div className="h-2 w-2 rounded-full bg-black animate-pulse" />
+          <span className="text-[9px] font-extrabold uppercase tracking-widest text-black">
+            Sistem Aktif
+          </span>
+        </div>
       </div>
     </header>
   );

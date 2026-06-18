@@ -1,0 +1,20 @@
+# Article fixtures for tests
+one:
+  title: "Penerapan Pembelajaran Mesin untuk Deteksi Penipuan"
+  abstract: "Abstrak penelitian tentang pendeteksian transaksi fraud menggunakan mesin pembelajaran."
+  authors: "Andi Prasetyo"
+  keywords: "machine learning, fraud"
+  status: "Under Review"
+  category: one
+  user: author_user
+  submitted_at: 2026-06-17 21:18:40
+
+two:
+  title: "Analisis Kinerja Jaringan IoT"
+  abstract: "Penelitian mendalam mengenai throughput dan latency jaringan berbasis IoT."
+  authors: "Budi Utomo"
+  keywords: "iot, network"
+  status: "Revision Required"
+  category: two
+  user: author_user
+  submitted_at: 2026-06-17 21:18:40

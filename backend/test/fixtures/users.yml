@@ -1,0 +1,21 @@
+# User fixtures for tests
+author_user:
+  first_name: Andi
+  last_name: Prasetyo
+  email: andi@gmail.com
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: author
+
+editor_user:
+  first_name: Hendra
+  last_name: Wijaya
+  email: hendra@ugm.ac.id
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: editor
+
+admin_user:
+  first_name: Admin
+  last_name: User
+  email: admin@ugm.ac.id
+  password_digest: <%= BCrypt::Password.create('password123') %>
+  role: admin

@@ -12,8 +12,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { StatusBadge } from "@/components/shared/StatusBadge";
-import { ReviewActionDialog } from "@/components/admin/ReviewActionDialog";
-import { mockArticles } from "@/lib/mock-data";
+import { useRouter } from "next/navigation";
+import { useDebounce } from "@/hooks/useDebounce";
+import { updateArticleStatus } from "@/lib/api-client";
 import type { Article } from "@/types";
 import { MoreHorizontal, Search, SlidersHorizontal, ChevronDown } from "lucide-react";
 import {
@@ -22,25 +23,41 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useDebounce } from "@/hooks/useDebounce";
 
-export function SubmissionManagementTable() {
+interface SubmissionManagementTableProps {
+  articles: Article[];
+  onUpdate?: (articles: Article[]) => void;
+}
+
+export function SubmissionManagementTable({ articles, onUpdate }: SubmissionManagementTableProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
   const debouncedQuery = useDebounce(searchQuery);
 
-  const filtered = mockArticles.filter(
+  const filtered = articles.filter(
     (a) =>
       a.title.toLowerCase().includes(debouncedQuery.toLowerCase()) ||
-      a.authors.some((auth) =>
+      a.authors.some((auth: string) =>
         auth.toLowerCase().includes(debouncedQuery.toLowerCase())
       )
   );
 
   const handleAction = (article: Article) => {
-    setSelectedArticle(article);
-    setDialogOpen(true);
+    router.push(`/admin/submissions/${article.id}`);
+  };
+
+  const handleStatusUpdate = async (articleId: string, newStatus: string) => {
+    try {
+      await updateArticleStatus(articleId, newStatus);
+      if (onUpdate) {
+        const updated = articles.map((a) =>
+          a.id === articleId ? { ...a, status: newStatus as Article["status"] } : a
+        );
+        onUpdate(updated);
+      }
+    } catch (err) {
+      console.error("Gagal mengubah status:", err);
+    }
   };
 
   return (
@@ -129,7 +146,14 @@ export function SubmissionManagementTable() {
                   </span>
                 </TableCell>
                 <TableCell className="py-4">
-                  <StatusBadge status={article.status} />
+                  <div className="flex flex-col gap-1.5 items-start">
+                    <StatusBadge status={article.status} round={article.round} />
+                    {article.review_assignments && article.review_assignments.length > 0 && (
+                      <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground bg-zinc-50 border border-black/10 px-1.5 py-0.5 rounded">
+                        Review: {article.review_assignments.filter((ra: any) => ra.status === 'completed').length} / {article.review_assignments.length} Selesai
+                      </span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="py-4">
                   <div className="flex items-center gap-2">
@@ -149,9 +173,15 @@ export function SubmissionManagementTable() {
                         <MoreHorizontal className="w-4 h-4 text-black" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="font-sans text-sm border-2 border-black rounded-xl">
-                        <DropdownMenuItem className="font-bold">Lihat Artikel Lengkap</DropdownMenuItem>
-                        <DropdownMenuItem className="font-bold">Lihat Riwayat</DropdownMenuItem>
-                        <DropdownMenuItem className="text-rose-600 font-bold">Arsipkan</DropdownMenuItem>
+                        <DropdownMenuItem className="font-bold" onClick={() => window.location.href = `/articles/${article.id}`}>
+                          Lihat Artikel Lengkap
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="font-bold" onClick={() => handleStatusUpdate(article.id, "Published")}>
+                          Setujui & Terbitkan
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-rose-600 font-bold" onClick={() => handleStatusUpdate(article.id, "Rejected")}>
+                          Tolak Naskah
+                        </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -173,14 +203,6 @@ export function SubmissionManagementTable() {
         )}
       </div>
 
-      <ReviewActionDialog
-        article={selectedArticle}
-        open={dialogOpen}
-        onClose={() => {
-          setDialogOpen(false);
-          setSelectedArticle(null);
-        }}
-      />
     </>
   );
 }

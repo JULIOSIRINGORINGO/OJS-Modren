@@ -1,8 +1,9 @@
+"use client";
+
+import Link from "next/link";
 import { HelpCircle, BookOpen, FileText, Download, Mail } from "lucide-react";
 import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
 import { Separator } from "@/components/ui/separator";
-
-export const metadata = { title: "Bantuan & Panduan" };
 
 const faqs = [
   {
@@ -24,15 +25,15 @@ export default function HelpPage() {
     <div className="flex flex-col h-full w-full bg-background">
       <DashboardNavbar
         title="Bantuan & Panduan"
-        subtitle="Pusat informasi dan dukungan untuk penulis Modern OJS."
+        subtitle="Pusat informasi dan dukungan untuk penulis FAST-Journal."
         icon={HelpCircle}
       />
       <div className="flex-1 overflow-y-auto">
         <div className="px-6 py-8 max-w-4xl w-full mx-auto">
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <a
-              href="#"
+            <Link
+              href="/panduan-penulis"
               className="bg-card rounded-2xl p-5 transition-all duration-300 neo-border neo-shadow hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[7px_7px_0px_0px_var(--neo-shadow-color)] active:translate-x-0 active:translate-y-0 active:shadow-sm group flex flex-col items-center text-center"
             >
               <div className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center mb-3 bg-purple-100 text-purple-700 shadow-[2px_2px_0px_0px_#000000] font-black">
@@ -40,10 +41,10 @@ export default function HelpPage() {
               </div>
               <h3 className="text-[13px] font-black uppercase tracking-wider text-foreground mb-2">Panduan Penulis</h3>
               <p className="text-[11px] font-medium text-muted-foreground leading-relaxed">Pedoman lengkap cara menulis dan mensitasi untuk jurnal ini.</p>
-            </a>
+            </Link>
             
-            <a
-              href="#"
+            <Link
+              href="/template"
               className="bg-card rounded-2xl p-5 transition-all duration-300 neo-border neo-shadow hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[7px_7px_0px_0px_var(--neo-shadow-color)] active:translate-x-0 active:translate-y-0 active:shadow-sm group flex flex-col items-center text-center"
             >
               <div className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center mb-3 bg-emerald-100 text-emerald-700 shadow-[2px_2px_0px_0px_#000000] font-black">
@@ -51,10 +52,10 @@ export default function HelpPage() {
               </div>
               <h3 className="text-[13px] font-black uppercase tracking-wider text-foreground mb-2">Unduh Templat</h3>
               <p className="text-[11px] font-medium text-muted-foreground leading-relaxed">Templat naskah resmi dalam format Microsoft Word (.docx).</p>
-            </a>
+            </Link>
             
-            <a
-              href="#"
+            <Link
+              href="/kebijakan"
               className="bg-card rounded-2xl p-5 transition-all duration-300 neo-border neo-shadow hover:-translate-x-1 hover:-translate-y-1 hover:shadow-[7px_7px_0px_0px_var(--neo-shadow-color)] active:translate-x-0 active:translate-y-0 active:shadow-sm group flex flex-col items-center text-center"
             >
               <div className="w-10 h-10 rounded-xl border-2 border-black flex items-center justify-center mb-3 bg-amber-100 text-amber-700 shadow-[2px_2px_0px_0px_#000000] font-black">
@@ -62,7 +63,7 @@ export default function HelpPage() {
               </div>
               <h3 className="text-[13px] font-black uppercase tracking-wider text-foreground mb-2">Kebijakan Hak Cipta</h3>
               <p className="text-[11px] font-medium text-muted-foreground leading-relaxed">Informasi terkait lisensi publikasi dan akses terbuka (Open Access).</p>
-            </a>
+            </Link>
           </div>
 
           <div
@@ -89,7 +90,7 @@ export default function HelpPage() {
               </p>
             </div>
             <a
-              href="mailto:support@modernojs.id"
+              href="mailto:support@fastjournal.id"
               className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-white border-2 border-black font-black uppercase text-[11px] tracking-wider text-black hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_#000000] active:translate-y-0 active:shadow-none transition-all duration-200 shrink-0 shadow-[2px_2px_0px_0px_#000000]"
             >
               <Mail className="w-4 h-4 stroke-[2.5px]" /> Hubungi Dukungan

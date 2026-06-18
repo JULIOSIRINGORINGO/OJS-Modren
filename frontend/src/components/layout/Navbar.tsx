@@ -2,21 +2,40 @@
 
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
-import { BookOpen, Menu, X, ArrowRight } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { BookOpen, Menu, X, ArrowRight, LayoutDashboard, LogOut } from "lucide-react";
 import { NAV_LINKS, SITE_NAME } from "@/lib/constants";
 import { cn } from "@/lib/utils";
+import { getCurrentUser, logout, fetchSetting } from "@/lib/api-client";
 
 export function Navbar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [journalName, setJournalName] = useState(SITE_NAME);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
+    setUser(getCurrentUser());
+    
+    // Fetch dynamic journal name
+    fetchSetting("journal_name")
+      .then((val) => {
+        if (val) setJournalName(val);
+      })
+      .catch((err) => console.error(err));
+
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleLogout = () => {
+    logout();
+    setUser(null);
+    router.push("/");
+  };
 
   return (
     <header
@@ -36,7 +55,7 @@ export function Navbar() {
           <span
             className="font-black text-[14px] uppercase tracking-wider text-foreground"
           >
-            {SITE_NAME}
+            {journalName}
           </span>
         </Link>
 
@@ -63,19 +82,40 @@ export function Navbar() {
 
         {/* Auth Buttons */}
         <div className="hidden md:flex items-center gap-2.5">
-          <Link
-            href="/masuk"
-            className="inline-flex h-9 items-center justify-center rounded-xl px-4 text-[11px] font-black uppercase tracking-wider text-foreground hover:bg-purple-100 dark:hover:bg-purple-950/20 transition-colors"
-          >
-            Masuk
-          </Link>
-          <Link
-            href="/daftar"
-            className="inline-flex h-9 items-center justify-center rounded-xl px-4 text-[11px] font-black uppercase tracking-wider bg-primary text-primary-foreground neo-btn gap-1.5"
-          >
-            Daftar
-            <ArrowRight className="w-3.5 h-3.5 stroke-[2.5px]" />
-          </Link>
+          {user ? (
+            <>
+              <Link
+                href="/dashboard"
+                className="inline-flex h-9 items-center justify-center rounded-xl px-4 text-[11px] font-black uppercase tracking-wider bg-primary text-primary-foreground neo-btn gap-1.5"
+              >
+                <LayoutDashboard className="w-3.5 h-3.5 stroke-[2.5px]" />
+                Dashboard
+              </Link>
+              <button
+                onClick={handleLogout}
+                className="inline-flex h-9 items-center justify-center rounded-xl px-3 text-[11px] font-black uppercase tracking-wider text-foreground hover:bg-rose-50 hover:text-rose-600 transition-colors gap-1.5"
+              >
+                <LogOut className="w-3.5 h-3.5 stroke-[2.5px]" />
+                Keluar
+              </button>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/masuk"
+                className="inline-flex h-9 items-center justify-center rounded-xl px-4 text-[11px] font-black uppercase tracking-wider text-foreground hover:bg-purple-100 dark:hover:bg-purple-950/20 transition-colors"
+              >
+                Masuk
+              </Link>
+              <Link
+                href="/daftar"
+                className="inline-flex h-9 items-center justify-center rounded-xl px-4 text-[11px] font-black uppercase tracking-wider bg-primary text-primary-foreground neo-btn gap-1.5"
+              >
+                Daftar
+                <ArrowRight className="w-3.5 h-3.5 stroke-[2.5px]" />
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Toggle */}
@@ -112,23 +152,44 @@ export function Navbar() {
             );
           })}
           <div className="flex gap-3 pt-4 border-t-2 border-sidebar-border">
-            <Link
-              href="/masuk"
-              className="flex-1 inline-flex h-10 items-center justify-center rounded-xl border-2 border-black bg-white text-black font-black uppercase tracking-wider text-[11px] shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-50"
-              onClick={() => setMobileOpen(false)}
-            >
-              Masuk
-            </Link>
-            <Link
-              href="/daftar"
-              className="flex-1 inline-flex h-10 items-center justify-center rounded-xl text-[11px] font-black uppercase tracking-wider bg-primary text-primary-foreground neo-btn"
-              onClick={() => setMobileOpen(false)}
-            >
-              Daftar
-            </Link>
+            {user ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="flex-1 inline-flex h-10 items-center justify-center rounded-xl text-[11px] font-black uppercase tracking-wider bg-primary text-primary-foreground neo-btn"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <button
+                  onClick={() => { handleLogout(); setMobileOpen(false); }}
+                  className="flex-1 inline-flex h-10 items-center justify-center rounded-xl border-2 border-black bg-white text-black font-black uppercase tracking-wider text-[11px] shadow-[2px_2px_0px_0px_#000] hover:bg-rose-50"
+                >
+                  Keluar
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/masuk"
+                  className="flex-1 inline-flex h-10 items-center justify-center rounded-xl border-2 border-black bg-white text-black font-black uppercase tracking-wider text-[11px] shadow-[2px_2px_0px_0px_#000] hover:bg-zinc-50"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Masuk
+                </Link>
+                <Link
+                  href="/daftar"
+                  className="flex-1 inline-flex h-10 items-center justify-center rounded-xl text-[11px] font-black uppercase tracking-wider bg-primary text-primary-foreground neo-btn"
+                  onClick={() => setMobileOpen(false)}
+                >
+                  Daftar
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}
     </header>
   );
 }
+

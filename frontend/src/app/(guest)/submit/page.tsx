@@ -1,58 +1,140 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { BookOpen, FileText, UserCheck, CheckSquare, RefreshCw, LogIn, UserPlus, ArrowRight } from "lucide-react";
+import { BookOpen, FileText, UserCheck, CheckSquare, RefreshCw, LogIn, UserPlus, ArrowRight, HelpCircle } from "lucide-react";
+import { fetchSetting } from "@/lib/api-client";
 
-export const metadata = { title: "Kirim Naskah — FAST-Journal" };
-
-const submissionSteps = [
+const defaultSteps = [
   {
-    number: "1",
-    title: "Tahap 1: Persiapan Naskah & Format",
-    bgColor: "bg-purple-100",
-    icon: FileText,
-    details: [
-      "Gunakan berkas format dokumen Microsoft Word (.docx).",
-      "Isi naskah harus ditulis dan diatur ketat mengikuti Template Resmi Jurnal UNPRI.",
-      "Sediakan abstrak singkat antara 150-300 kata dalam Bahasa Indonesia dan Bahasa Inggris.",
-      "Pastikan file naskah utama tidak mencantumkan nama penulis (untuk proses double-blind peer review)."
-    ]
+    step: "01",
+    title: "Persyaratan Umum",
+    items: [
+      "Naskah belum pernah diterbitkan dan tidak sedang dalam proses review di jurnal lain",
+      "Ditulis dalam Bahasa Indonesia atau Bahasa Inggris yang baik dan benar",
+      "Panjang naskah: 4.000–8.000 kata (termasuk referensi)",
+      "Format file: Microsoft Word (.docx) atau LaTeX (.tex)",
+    ],
   },
   {
-    number: "2",
-    title: "Tahap 2: Registrasi & Masuk Akun",
-    bgColor: "bg-yellow-100",
-    icon: UserCheck,
-    details: [
-      "Penulis wajib memiliki akun aktif di platform FAST-Journal.",
-      "Jika belum memiliki akun, silakan daftar secara gratis melalui menu Daftar Akun.",
-      "Gunakan alamat email aktif yang dapat dihubungi untuk pembaruan status naskah."
-    ]
+    step: "02",
+    title: "Struktur Naskah",
+    items: [
+      "Judul: ringkas, informatif, maksimal 15 kata",
+      "Abstrak: 150–250 kata dalam satu paragraf",
+      "Kata kunci: 4–6 kata, dipisahkan koma",
+      "Pendahuluan, Metode, Hasil, Diskusi, Kesimpulan, Referensi",
+    ],
   },
   {
-    number: "3",
-    title: "Tahap 3: Pengajuan Melalui Dashboard",
-    bgColor: "bg-blue-100",
-    icon: CheckSquare,
-    details: [
-      "Masuk ke akun Anda, lalu arahkan ke menu Dashboard Penulis.",
-      "Pilih menu Submissions lalu klik tombol New Submission.",
-      "Isi semua metadata penting seperti Judul, Abstrak, Kata Kunci, serta Kontributor bersama (Co-authors).",
-      "Unggah berkas naskah utama Anda pada kolom pengunggahan file yang tersedia."
-    ]
+    step: "03",
+    title: "Format Penulisan",
+    items: [
+      "Font: Times New Roman 12pt, spasi 1,5",
+      "Margin: 2,5 cm semua sisi",
+      "Gambar dan tabel diberi judul dan nomor urut",
+      "Persamaan matematis diberi nomor di sisi kanan",
+    ],
   },
   {
-    number: "4",
-    title: "Tahap 4: Proses Peer-Review & Hasil",
-    bgColor: "bg-emerald-100",
-    icon: RefreshCw,
-    details: [
-      "Tim Editor akan melakukan penyaringan awal (screening) kesesuaian topik dan format.",
-      "Naskah yang lolos screening akan ditinjau secara anonim oleh minimal 2 Reviewer ahli.",
-      "Anda dapat memantau perkembangan tinjauan dan mengunduh revisi langsung dari Dashboard Anda."
-    ]
-  }
+    step: "04",
+    title: "Gaya Sitasi",
+    items: [
+      "Gunakan format APA 7th Edition untuk referensi",
+      "Minimal 20 referensi dari jurnal bereputasi",
+      "Referensi dalam 5 tahun terakhir minimal 60%",
+      "Hindari sitasi diri berlebihan (maks. 10%)",
+    ],
+  },
+  {
+    step: "05",
+    title: "Proses Setelah Pengiriman",
+    items: [
+      "Konfirmasi penerimaan dikirim dalam 3 hari kerja",
+      "Pemeriksaan awal (desk review) oleh editor: 7–14 hari",
+      "Proses tinjauan sejawat: 30–45 hari",
+      "Keputusan editorial disampaikan melalui email",
+    ],
+  },
 ];
 
+const stepStyles: Record<string, { icon: any; bgColor: string }> = {
+  "01": { icon: FileText, bgColor: "bg-purple-100" },
+  "02": { icon: UserCheck, bgColor: "bg-yellow-100" },
+  "03": { icon: CheckSquare, bgColor: "bg-blue-100" },
+  "04": { icon: RefreshCw, bgColor: "bg-emerald-100" },
+  "05": { icon: BookOpen, bgColor: "bg-rose-100" },
+};
+
+const getStepStyle = (stepStr: string, index: number) => {
+  const stepKey = stepStr.padStart(2, "0");
+  if (stepStyles[stepKey]) return stepStyles[stepKey];
+  
+  const fallbacks = [
+    { icon: FileText, bgColor: "bg-purple-100" },
+    { icon: UserCheck, bgColor: "bg-yellow-100" },
+    { icon: CheckSquare, bgColor: "bg-blue-100" },
+    { icon: RefreshCw, bgColor: "bg-emerald-100" },
+    { icon: BookOpen, bgColor: "bg-rose-100" },
+  ];
+  return fallbacks[index % fallbacks.length];
+};
+
+interface SubmissionStep {
+  number: string;
+  title: string;
+  bgColor: string;
+  icon: any;
+  details: string[];
+}
+
 export default function SubmitPage() {
+  const [submissionSteps, setSubmissionSteps] = useState<SubmissionStep[]>(() => {
+    return defaultSteps.map((item: any, index: number) => {
+      const style = getStepStyle(item.step, index);
+      return {
+        number: item.step,
+        title: item.title,
+        bgColor: style.bgColor,
+        icon: style.icon,
+        details: item.items || [],
+      };
+    });
+  });
+
+  useEffect(() => {
+    document.title = "Kirim Naskah — FAST-Journal";
+
+    async function loadData() {
+      const dbSteps = await fetchSetting("journal_guidelines");
+      let dataString = dbSteps;
+      
+      if (!dataString) {
+        dataString = localStorage.getItem("journal_guidelines");
+      }
+
+      if (dataString) {
+        try {
+          const parsed = JSON.parse(dataString);
+          const mapped = parsed.map((item: any, index: number) => {
+            const style = getStepStyle(item.step, index);
+            return {
+              number: item.step,
+              title: item.title,
+              bgColor: style.bgColor,
+              icon: style.icon,
+              details: item.items || [],
+            };
+          });
+          setSubmissionSteps(mapped);
+        } catch (e) {
+          // fallback is already set in initial state
+        }
+      }
+    }
+    
+    loadData();
+  }, []);
   return (
     <div className="pb-24">
       {/* Page Header */}

@@ -1,0 +1,10 @@
+# Category fixtures for tests
+one:
+  name: Sains Komputer
+  slug: sains-komputer
+  icon: laptop
+
+two:
+  name: Teknik Elektro
+  slug: teknik-elektro
+  icon: cpu
