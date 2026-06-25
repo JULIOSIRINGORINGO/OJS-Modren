@@ -31,6 +31,10 @@ export default function SettingsPage() {
   const [reviewersPerManuscript, setReviewersPerManuscript] = useState("2");
   const [reviewDurationDays, setReviewDurationDays] = useState("30");
 
+  // DOI Configuration States
+  const [doiPrefix, setDoiPrefix] = useState("10.31258");
+  const [doiSuffixPattern, setDoiSuffixPattern] = useState("fastjournal");
+
   useEffect(() => {
     async function loadSettings() {
       try {
@@ -63,6 +67,12 @@ export default function SettingsPage() {
 
         const duration = await fetchSetting("review_duration_days");
         if (duration) setReviewDurationDays(duration);
+
+        const prefix = await fetchSetting("doi_prefix");
+        if (prefix) setDoiPrefix(prefix);
+
+        const suffix = await fetchSetting("doi_suffix_pattern");
+        if (suffix) setDoiSuffixPattern(suffix);
       } catch (err) {
         console.error("Failed to load settings:", err);
       } finally {
@@ -86,6 +96,8 @@ export default function SettingsPage() {
         updateSetting("editorial_email", editorialEmail),
         updateSetting("reviewers_per_manuscript", reviewersPerManuscript),
         updateSetting("review_duration_days", reviewDurationDays),
+        updateSetting("doi_prefix", doiPrefix),
+        updateSetting("doi_suffix_pattern", doiSuffixPattern),
       ]);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
@@ -219,6 +231,43 @@ export default function SettingsPage() {
                       className="font-sans"
                     />
                   </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Konfigurasi DOI */}
+              <div
+                className="bg-white/95 backdrop-blur-xl rounded-2xl border p-6 transition-all duration-300 shadow-sm"
+                style={{ borderColor: "rgba(139, 92, 246, 0.15)" }}
+              >
+                <h2 className="font-serif text-base font-semibold mb-4" style={{ color: "#09090B" }}>
+                  Konfigurasi DOI (Digital Object Identifier)
+                </h2>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Prefix DOI (misal: 10.31258)</Label>
+                      <Input
+                        value={doiPrefix}
+                        onChange={(e) => setDoiPrefix(e.target.value)}
+                        className="font-sans"
+                        placeholder="10.xxxx"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="font-sans text-sm">Pola Suffix DOI / Kode Jurnal (misal: fastjournal)</Label>
+                      <Input
+                        value={doiSuffixPattern}
+                        onChange={(e) => setDoiSuffixPattern(e.target.value)}
+                        className="font-sans"
+                        placeholder="kodejurnal"
+                      />
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
+                    Format DOI yang akan dihasilkan secara otomatis: <span className="text-purple-650 font-extrabold">{doiPrefix}/{doiSuffixPattern}.v[Volume]i[Edisi].[ID_Artikel]</span>
+                  </p>
                 </div>
               </div>
 

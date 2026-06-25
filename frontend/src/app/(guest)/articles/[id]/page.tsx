@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { fetchArticle, trackArticleView, trackArticleDownload, getCurrentUser, updateArticle, updateArticleStatus } from "@/lib/api-client";
+import { fetchArticle, trackArticleView, trackArticleDownload, getCurrentUser, updateArticle, updateArticleStatus, fetchBookmarks, addBookmark, removeBookmark } from "@/lib/api-client";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import Link from "next/link";
-import { Eye, Download, Calendar, ExternalLink, ArrowLeft, BookOpen, Loader2, UserCheck, Clock, FileText, CheckCircle } from "lucide-react";
+import { Eye, Download, Calendar, ExternalLink, ArrowLeft, BookOpen, Loader2, UserCheck, Clock, FileText, CheckCircle, Bookmark } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +33,12 @@ export default function ArticleDetailPage() {
   const [submittingRevision, setSubmittingRevision] = useState(false);
   const [revisionSuccess, setRevisionSuccess] = useState(false);
   const [revisionError, setRevisionError] = useState("");
+
+  // Bookmark States
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkId, setBookmarkId] = useState<string | null>(null);
+  const [bookmarking, setBookmarking] = useState(false);
+  const [showAuthNotice, setShowAuthNotice] = useState(false);
 
   const backLink = currentUser
     ? (["editor", "admin", "Editor", "Admin"].includes(currentUser.role)
@@ -73,7 +79,7 @@ export default function ArticleDetailPage() {
       if (!hasSetDefaultTab || (prevStatus && prevStatus !== article.status)) {
         if (!showWorkflow) {
           setActiveTab("naskah");
-        } else if (article.status === "Published") {
+        } else if (article.status === "Published" || article.status === "Production") {
           setActiveTab("diterbitkan");
         } else if (article.status === "Copyediting") {
           setActiveTab("copyedit");
@@ -106,6 +112,18 @@ export default function ArticleDetailPage() {
         if (user && String(user.id) === String(data.user_id)) {
           setIsAuthor(true);
         }
+
+        if (user) {
+          fetchBookmarks()
+            .then((bookmarksList) => {
+              const found = bookmarksList.find((b: any) => String(b.article?.id) === String(id));
+              if (found) {
+                setIsBookmarked(true);
+                setBookmarkId(found.id);
+              }
+            })
+            .catch((err) => console.error("Gagal memuat data penanda:", err));
+        }
       })
       .catch((err: any) => {
         console.error(err);
@@ -126,6 +144,30 @@ export default function ArticleDetailPage() {
   }, [id]);
 
   const BACKEND_URL = "http://localhost:3001";
+
+  const handleToggleBookmark = async () => {
+    if (!currentUser) {
+      setShowAuthNotice(true);
+      return;
+    }
+
+    setBookmarking(true);
+    try {
+      if (isBookmarked) {
+        await removeBookmark(bookmarkId || id);
+        setIsBookmarked(false);
+        setBookmarkId(null);
+      } else {
+        const res = await addBookmark(id);
+        setIsBookmarked(true);
+        setBookmarkId(res.id);
+      }
+    } catch (err) {
+      console.error("Gagal memperbarui penanda:", err);
+    } finally {
+      setBookmarking(false);
+    }
+  };
 
   const handleDownload = (format: string) => {
     if (!article) return;
@@ -369,6 +411,18 @@ Hendra Wijaya, M.Kom.`;
               <Download className="w-3.5 h-3.5 stroke-[2.5px]" />
               File Asli ({article.file_name ? (article.file_name.length > 18 ? article.file_name.substring(0, 15) + "..." : article.file_name) : "naskah_asli.docx"})
             </button>
+            <button
+              onClick={handleToggleBookmark}
+              disabled={bookmarking}
+              className={`inline-flex h-7 items-center gap-1.5 px-3.5 rounded-full border-2 border-black font-black uppercase tracking-wider text-[10px] shadow-[2px_2px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_0px_#000] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer ${
+                isBookmarked 
+                  ? "bg-purple-600 text-white hover:bg-purple-700" 
+                  : "bg-purple-200 text-black hover:bg-purple-300"
+              }`}
+            >
+              <Bookmark className={`w-3.5 h-3.5 stroke-[2.5px] ${isBookmarked ? "fill-white" : ""}`} />
+              {isBookmarked ? "Ditandai" : "Tandai Naskah"}
+            </button>
           </div>
           <h1 className="font-serif text-3xl sm:text-5xl font-black text-black leading-tight mb-6 uppercase tracking-tight">
             {article.title}
@@ -405,6 +459,12 @@ Hendra Wijaya, M.Kom.`;
               <Download className="w-4 h-4 text-black stroke-[2.5px]" />
               <span>{downloadCount.toLocaleString("id-ID")} unduhan</span>
             </div>
+            {article.pages && (
+              <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-zinc-500">
+                <BookOpen className="w-4 h-4 text-black stroke-[2.5px]" />
+                <span>Halaman: {article.pages}</span>
+              </div>
+            )}
             {article.doi && (
               <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-wider text-purple-650">
                 <ExternalLink className="w-4 h-4 text-black stroke-[2.5px]" />
@@ -545,7 +605,7 @@ Hendra Wijaya, M.Kom.`;
                 <div className="bg-white border-[3px] border-black p-8 shadow-[6px_6px_0px_0px_#000] space-y-6">
                   <h2 className="text-lg font-black uppercase tracking-tight text-black flex items-center gap-2.5 border-b-2 border-dashed border-black/10 pb-3">
                     <UserCheck className="w-5 h-5 stroke-[2.5px] text-purple-600" />
-                    CATATAN REVIEW &amp; EVALUASI (RONDE {activeRoundTab})
+                    CATATAN REVIEW & EVALUASI (RONDE {activeRoundTab})
                   </h2>
 
                   {/* Status Ronde */}
@@ -627,39 +687,52 @@ Hendra Wijaya, M.Kom.`;
                       )}
                     </div>
                   ) : (
-                    /* Author/Guest view: Display Editor's Decision Notes instead */
+                    /* Author/Guest view: Display Editor's Decision Notes instead if a decision has been made */
                     <div className="space-y-4">
-                      <div className="p-4 border-2 border-black rounded-xl bg-purple-50/10 space-y-2">
-                        <p className="text-[10px] font-black text-purple-700 uppercase tracking-wider">Catatan Evaluasi / Keputusan Editor</p>
-                        {article.editor_notes ? (
-                          <p className="text-xs text-zinc-700 font-bold whitespace-pre-line leading-relaxed font-sans">
-                            {article.editor_notes}
+                      {activeRoundTab < currentRound || ["Revision Required", "Copyediting", "Production", "Accepted", "Published", "Rejected"].includes(article.status) ? (
+                        <div className="p-4 border-2 border-black rounded-xl bg-purple-50/10 space-y-2">
+                          <p className="text-[10px] font-black text-purple-700 uppercase tracking-wider">Catatan Evaluasi / Keputusan Editor</p>
+                          {article.editor_notes ? (
+                            <p className="text-xs text-zinc-700 font-bold whitespace-pre-line leading-relaxed font-sans">
+                              {article.editor_notes.replace(/\s*\[Reviewer ditugaskan:[^\]]*\]/gi, "").trim()}
+                            </p>
+                          ) : (
+                            <p className="text-xs text-zinc-500 italic font-bold uppercase tracking-wide">
+                              Belum ada catatan evaluasi tertulis dari editor untuk ronde ini.
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="p-4 border-2 border-dashed border-black/20 rounded-xl bg-zinc-50 text-center py-6">
+                          <p className="text-xs font-black text-zinc-600 uppercase tracking-wider">
+                            Status: Naskah Sedang Dalam Peninjauan (Under Review)
                           </p>
-                        ) : (
-                          <p className="text-xs text-zinc-500 italic font-bold uppercase tracking-wide">
-                            Belum ada catatan evaluasi tertulis dari editor untuk ronde ini.
+                          <p className="text-[11px] text-zinc-500 font-bold uppercase tracking-wide mt-1.5 leading-relaxed">
+                            Catatan evaluasi resmi dari editor akan ditampilkan di sini setelah proses review dan penilaian selesai dilakukan.
                           </p>
-                        )}
-                      </div>
+                        </div>
+                      )}
                     </div>
                   )}
 
-                  {/* Pemberitahuan Keputusan Editor */}
-                  <div className="pt-4 border-t-2 border-dashed border-black/20 space-y-2.5">
-                    <p className="text-[10px] font-black text-purple-700 uppercase tracking-wider">Pemberitahuan / Pengumuman Editor</p>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setSelectedLetterRound(activeRoundTab);
-                        setLetterType("ulasan");
-                        setShowLetterModal(true);
-                      }}
-                      className="text-xs font-black text-purple-700 hover:text-purple-900 transition-colors underline uppercase tracking-wider flex items-center gap-1.5"
-                    >
-                      <FileText className="w-3.5 h-3.5" />
-                      [Keputusan] Surat Pemberitahuan Keputusan Editor (Ronde {activeRoundTab})
-                    </button>
-                  </div>
+                  {/* Pemberitahuan Keputusan Editor (Hanya tampil jika sudah ada keputusan atau pengguna adalah Editor/Admin) */}
+                  {(activeRoundTab < currentRound || ["Revision Required", "Copyediting", "Production", "Accepted", "Published", "Rejected"].includes(article.status) || isEditor) && (
+                    <div className="pt-4 border-t-2 border-dashed border-black/20 space-y-2.5">
+                      <p className="text-[10px] font-black text-purple-700 uppercase tracking-wider">Pemberitahuan / Pengumuman Editor</p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedLetterRound(activeRoundTab);
+                          setLetterType("ulasan");
+                          setShowLetterModal(true);
+                        }}
+                        className="text-xs font-black text-purple-700 hover:text-purple-900 transition-colors underline uppercase tracking-wider flex items-center gap-1.5"
+                      >
+                        <FileText className="w-3.5 h-3.5" />
+                        [Keputusan] Surat Pemberitahuan Keputusan Editor (Ronde {activeRoundTab})
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Form Kirim Revisi (Hanya tampil di tab Ulasan Ronde Terkini/Aktif, jika status Perlu Revisi, dan pengguna adalah Penulis) */}
@@ -828,17 +901,19 @@ Hendra Wijaya, M.Kom.`;
             {/* TAB 4: DITERBITKAN */}
             {activeTab === "diterbitkan" && (
               <div className="space-y-8">
-                {article.status === "Published" ? (
+                {article.status === "Published" || article.status === "Production" ? (
                   <div className="bg-white border-[3px] border-black p-8 shadow-[6px_6px_0px_0px_#000] space-y-6">
                     <h2 className="text-sm font-black uppercase tracking-wider text-black border-b-2 border-dashed border-black/10 pb-2 flex items-center gap-2">
                       <CheckCircle className="w-4 h-4 text-emerald-600" />
-                      BERKAS &amp; DOKUMEN TERBITAN FINAL
+                      {article.status === "Published" ? "BERKAS & DOKUMEN TERBITAN FINAL" : "BERKAS & DOKUMEN PERSIAPAN PRODUKSI"}
                     </h2>
                     
                     <div className="p-4 border-2 border-emerald-300 rounded-xl bg-emerald-50/20 text-xs font-bold leading-relaxed space-y-1">
                       <p className="text-[10px] font-black text-emerald-700 uppercase tracking-wider">Status Tahap</p>
                       <p className="text-sm font-extrabold text-black uppercase tracking-wide">
-                        Naskah ini telah resmi diterbitkan di FAST-Journal.
+                        {article.status === "Published" 
+                          ? "Naskah ini telah resmi diterbitkan di FAST-Journal." 
+                          : "Naskah ini telah diterima & masuk tahap persiapan produksi untuk terbitan mendatang."}
                       </p>
                     </div>
 
@@ -913,7 +988,7 @@ Hendra Wijaya, M.Kom.`;
                         className="text-xs font-black text-purple-700 hover:text-purple-900 transition-colors underline uppercase tracking-wider flex items-center gap-1.5"
                       >
                         <FileText className="w-3.5 h-3.5" />
-                        [Keputusan] Surat Keterangan &amp; Ucapan Selamat Penerbitan
+                        [Keputusan] Surat Keterangan & Ucapan Selamat Penerbitan
                       </button>
                     </div>
 
@@ -1142,6 +1217,51 @@ Hendra Wijaya, M.Kom.`;
               >
                 Tutup
               </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Auth Notice Modal for Bookmark */}
+      {showAuthNotice && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white border-3 border-black rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] max-w-md w-full p-6 space-y-4 relative font-sans">
+            <button
+              onClick={() => setShowAuthNotice(false)}
+              className="absolute top-4 right-4 w-8 h-8 rounded-lg border-2 border-black bg-rose-200 text-black font-black flex items-center justify-center hover:bg-rose-300 transition-colors shadow-[2px_2px_0px_0px_#000]"
+            >
+              ✕
+            </button>
+            
+            <div className="flex items-center gap-2.5 pb-2 border-b-2 border-black">
+              <Bookmark className="w-5 h-5 text-purple-600 stroke-[2.5px]" />
+              <h3 className="text-sm font-black uppercase tracking-wider text-black">
+                Pemberitahuan Penanda
+              </h3>
+            </div>
+            
+            <div className="space-y-3 text-xs font-semibold text-zinc-700 leading-relaxed">
+              <p>
+                Untuk menandai naskah ini dan menyimpannya ke dalam menu **Penanda**, Anda harus masuk atau membuat akun terlebih dahulu.
+              </p>
+              <p>
+                Dengan memiliki akun, Anda dapat menyimpan naskah-naskah favorit dan memantaunya langsung dari dasbor Anda.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              <Link
+                href="/masuk"
+                className="flex-1 inline-flex h-9 items-center justify-center rounded-xl border-2 border-black bg-purple-600 text-white font-black uppercase tracking-wider text-[10px] shadow-[2px_2px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_0px_#000] active:translate-x-0 active:translate-y-0 transition-all text-center items-center"
+              >
+                Masuk Sekarang
+              </Link>
+              <Link
+                href="/daftar"
+                className="flex-1 inline-flex h-9 items-center justify-center rounded-xl border-2 border-black bg-yellow-200 text-black font-black uppercase tracking-wider text-[10px] shadow-[2px_2px_0px_0px_#000] hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-[3px_3px_0px_0px_#000] active:translate-x-0 active:translate-y-0 transition-all text-center items-center"
+              >
+                Daftar Akun Baru
+              </Link>
             </div>
           </div>
         </div>

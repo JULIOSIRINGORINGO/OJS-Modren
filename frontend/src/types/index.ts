@@ -78,6 +78,8 @@ export interface Article {
   review_assignments?: ReviewAssignment[];
   issue_id?: string | number;
   body_text?: string;
+  year?: number | string;
+  pages?: string;
 }
 
 export interface Category {

@@ -1,0 +1,14 @@
+{
+  "database-client.connections": [
+    {
+      "name": "FAST-Journal UNPRI (PostgreSQL)",
+      "type": "PostgreSQL",
+      "dbType": "PostgreSQL",
+      "host": "localhost",
+      "port": 5432,
+      "username": "julio",
+      "password": "",
+      "database": "backend_development"
+    }
+  ]
+}

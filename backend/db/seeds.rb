@@ -8,6 +8,22 @@ Article.destroy_all
 Category.destroy_all
 Issue.destroy_all
 User.destroy_all
+Setting.destroy_all
+
+# Create Settings
+puts "Creating default settings..."
+Setting.set("journal_name", "FAST-Journal UNPRI")
+Setting.set("journal_abbr", "FASTJ")
+Setting.set("journal_desc", "Platform modern untuk penerbitan akademik, tinjauan sejawat, dan diseminasi akses terbuka.")
+Setting.set("issn_print", "2580-1234")
+Setting.set("issn_online", "2580-5678")
+Setting.set("current_volume", "12")
+Setting.set("current_issue", "2")
+Setting.set("editorial_email", "redaksi@fastjournal.id")
+Setting.set("reviewers_per_manuscript", "2")
+Setting.set("review_duration_days", "30")
+Setting.set("doi_prefix", "10.31258")
+Setting.set("doi_suffix_pattern", "fastjournal")
 
 # Create Users
 puts "Creating users..."
@@ -58,12 +74,7 @@ hendra = User.create!(
 
 # Create Categories
 puts "Creating categories..."
-ilmu_data = Category.create!(name: "Ilmu Data", slug: "ilmu-data", icon: "BarChart3")
-pba = Category.create!(name: "Pemrosesan Bahasa Alami", slug: "pba", icon: "MessageSquare")
-ml = Category.create!(name: "Pembelajaran Mesin", slug: "pembelajaran-mesin", icon: "Brain")
-cv = Category.create!(name: "Penglihatan Komputer", slug: "penglihatan-komputer", icon: "Eye")
-dist = Category.create!(name: "Sistem Terdistribusi", slug: "sistem-terdistribusi", icon: "Network")
-xai = Category.create!(name: "AI yang Dapat Dijelaskan", slug: "xai", icon: "Lightbulb")
+sains_tek = Category.create!(name: "Sains dan Teknologi", slug: "sains-dan-teknologi", icon: "Brain")
 
 # Create Issues
 puts "Creating issues..."
@@ -84,13 +95,22 @@ issue_draft = Issue.create!(
   status: "draft"
 )
 
+issue_old = Issue.create!(
+  volume: "Vol. 11",
+  number: "Edisi 2",
+  year: 2024,
+  title: "Sistem Terdistribusi & Optimasi Cloud",
+  status: "published",
+  published_at: "2024-10-15"
+)
+
 # Create Articles
 puts "Creating articles..."
 a1 = Article.create!(
   title: "Arsitektur Transformer untuk Tugas NLP Bahasa Indonesia dengan Sumber Daya Terbatas",
   abstract: "Makalah ini menyelidiki efektivitas model transformer pra-latih yang diadaptasi untuk tugas pemrosesan bahasa Indonesia dengan data berlabel yang terbatas...",
   authors: "Andi Prasetyo, Siti Rahayu, Budi Santoso",
-  category: pba,
+  category: sains_tek,
   keywords: "NLP, Transformer, Bahasa Indonesia, Sumber Daya Terbatas",
   status: "Published",
   doi: "10.1234/ojs.2025.001",
@@ -121,7 +141,7 @@ a2 = Article.create!(
   title: "Pembelajaran Federasi untuk Analitik Layanan Kesehatan yang Menjaga Privasi",
   abstract: "Kami mengusulkan kerangka pembelajaran federasi yang memungkinkan pelatihan model terdistribusi di jaringan rumah sakit tanpa berbagi data pasien mentah...",
   authors: "Dewi Kusuma, Reza Firmansyah",
-  category: ml,
+  category: sains_tek,
   keywords: "Pembelajaran Federasi, Privasi, Layanan Kesehatan, Terdistribusi",
   status: "Under Review",
   submitted_at: "2025-04-05",
@@ -147,7 +167,7 @@ a3 = Article.create!(
   title: "Jaringan Saraf Graf untuk Prediksi Sitasi Akademik",
   abstract: "Studi ini mengeksplorasi pendekatan berbasis GNN untuk memprediksi tautan sitasi antara makalah akademik menggunakan metadata dan fitur teks...",
   authors: "Ahmad Fauzi, Lina Marlina, Hendra Wijaya",
-  category: ilmu_data,
+  category: sains_tek,
   keywords: "GNN, Jaringan Sitasi, Graf Pengetahuan",
   status: "Published",
   doi: "10.1234/ojs.2025.002",
@@ -178,7 +198,7 @@ a4 = Article.create!(
   title: "AI yang Dapat Dijelaskan dalam Penilaian Risiko Kredit: Tinjauan Sistematis",
   abstract: "Tinjauan komprehensif metode XAI yang diterapkan pada model penilaian kredit di lembaga keuangan Asia Tenggara...",
   authors: "Maria Puspita",
-  category: xai,
+  category: sains_tek,
   keywords: "XAI, Risiko Kredit, SHAP, LIME",
   status: "Revision Required",
   submitted_at: "2025-04-18",
@@ -204,7 +224,7 @@ a5 = Article.create!(
   title: "Analisis Sentimen Multimodal pada Media Sosial Indonesia",
   abstract: "Menggabungkan fitur teks, gambar, dan audio untuk analisis sentimen yang andal pada dataset Twitter dan Instagram Indonesia...",
   authors: "Rizki Hamdani, Yusuf Abdillah",
-  category: pba,
+  category: sains_tek,
   keywords: "Multimodal, Analisis Sentimen, Media Sosial",
   status: "Under Review",
   submitted_at: "2025-05-01",
@@ -230,7 +250,7 @@ a6 = Article.create!(
   title: "Optimasi Edge Computing untuk Aliran Data IoT Real-Time",
   abstract: "Kami menyajikan algoritma penjadwalan baru untuk node tepi yang memproses data sensor IoT frekuensi tinggi dengan batasan latensi...",
   authors: "Citra Dewi, Bagus Pramono, Indra Kusuma",
-  category: dist,
+  category: sains_tek,
   keywords: "Edge Computing, IoT, Penjadwalan, Latensi",
   status: "Rejected",
   submitted_at: "2025-01-20",
@@ -249,6 +269,37 @@ a6 = Article.create!(
 
     # 4. Kesimpulan & Saran
     Optimalisasi di level Edge Computing terbukti vital untuk kesinambungan ekosistem IoT industri berskala besar. Saran penelitian lanjutan adalah penerapan pembelajaran penguatan (reinforcement learning) untuk otomasi kompresi data dinamis.
+  TEXT
+)
+
+a7 = Article.create!(
+  title: "Analisis Kinerja Protokol Konsensus pada Sistem Blockchain Terdistribusi",
+  abstract: "Penelitian ini mengevaluasi dan membandingkan latensi, throughput, dan konsumsi energi dari berbagai protokol konsensus blockchain dalam skenario beban tinggi...",
+  authors: "Andi Prasetyo, Budi Santoso",
+  category: sains_tek,
+  keywords: "Blockchain, Konsensus, Sistem Terdistribusi, Kinerja",
+  status: "Published",
+  doi: "10.1234/ojs.2024.003",
+  views: 450,
+  downloads: 95,
+  issue_id: issue_old.id,
+  published_at: "2024-10-15",
+  submitted_at: "2024-09-01",
+  user: andi,
+  file_name: "Blockchain_Consensus_Performance.docx",
+  references: "1. Castro, M., & Liskov, B. (2002). Practical Byzantine fault tolerance and proactive recovery.",
+  body_text: <<~TEXT
+    # 1. Pendahuluan
+    Sistem blockchain terdistribusi mengandalkan protokol konsensus untuk menjamin integritas data tanpa otoritas pusat. Makalah ini menyajikan analisis kinerja mendalam dari beberapa algoritma konsensus.
+
+    # 2. Metodologi
+    Eksperimen dijalankan pada testnet privat dengan 10 node validator. Kami memvariasikan beban transaksi dan mengukur latensi serta throughput.
+
+    # 3. Hasil & Pembahasan
+    Hasil menunjukkan bahwa PBFT memberikan throughput tinggi pada jumlah node kecil, namun latensi meningkat secara eksponensial seiring bertambahnya validator.
+
+    # 4. Kesimpulan
+    Penelitian ini menyimpulkan bahwa pemilihan protokol konsensus harus disesuaikan dengan kebutuhan skalabilitas dan tingkat kepercayaan jaringan.
   TEXT
 )
 

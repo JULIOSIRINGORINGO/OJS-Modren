@@ -1,7 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Library, Plus, Calendar, FileText, CheckCircle, Clock, Trash2, Globe, Loader2 } from "lucide-react";
+import { Library, Plus, Calendar, FileText, CheckCircle, Clock, Trash2, Globe, Loader2, ChevronDown, Pencil } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,7 +30,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { fetchIssues, createIssue, deleteIssue, publishIssue, fetchArticles, updateArticleStatus } from "@/lib/api-client";
+import { fetchIssues, createIssue, updateIssue, deleteIssue, publishIssue, fetchArticles, updateArticleStatus, fetchSetting, updateSetting } from "@/lib/api-client";
 import type { Issue, Article } from "@/types";
 
 export default function IssuesPage() {
@@ -36,6 +42,18 @@ export default function IssuesPage() {
   const [openCreate, setOpenCreate] = useState(false);
   const [openManage, setOpenManage] = useState(false);
   const [selectedIssue, setSelectedIssue] = useState<Issue | null>(null);
+  const [openEdit, setOpenEdit] = useState(false);
+  const [editingIssue, setEditingIssue] = useState<Issue | null>(null);
+
+  // Custom Confirmation Dialog state
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [confirmTitle, setConfirmTitle] = useState("");
+  const [confirmMessage, setConfirmMessage] = useState("");
+  const [confirmAction, setConfirmAction] = useState<(() => void) | null>(null);
+
+  // DOI Configuration state
+  const [doiPrefix, setDoiPrefix] = useState("10.31258");
+  const [doiSuffixPattern, setDoiSuffixPattern] = useState("fastjournal");
 
   // Form states
   const [volume, setVolume] = useState("");
@@ -45,12 +63,26 @@ export default function IssuesPage() {
   const [description, setDescription] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  const triggerConfirm = (title: string, message: string, action: () => void) => {
+    setConfirmTitle(title);
+    setConfirmMessage(message);
+    setConfirmAction(() => action);
+    setConfirmOpen(true);
+  };
+
   const loadData = () => {
     setLoading(true);
-    Promise.all([fetchIssues(), fetchArticles({ scope: "admin" })])
-      .then(([issuesData, articlesData]) => {
+    Promise.all([
+      fetchIssues(),
+      fetchArticles({ scope: "admin" }),
+      fetchSetting("doi_prefix"),
+      fetchSetting("doi_suffix_pattern")
+    ])
+      .then(([issuesData, articlesData, prefix, suffix]) => {
         setIssues(issuesData);
         setArticles(articlesData);
+        if (prefix) setDoiPrefix(prefix);
+        if (suffix) setDoiSuffixPattern(suffix);
       })
       .catch((err) => console.error("Gagal memuat edisi:", err))
       .finally(() => setLoading(false));
@@ -65,14 +97,18 @@ export default function IssuesPage() {
     if (!volume || !number || !year || !title) return;
     setSubmitting(true);
     try {
-      await createIssue({
-        volume,
-        number,
-        year,
-        title,
-        description,
-        status: "draft",
-      });
+      await Promise.all([
+        createIssue({
+          volume: `Vol. ${volume}`,
+          number: `Edisi ${number}`,
+          year,
+          title,
+          description,
+          status: "draft",
+        }),
+        updateSetting("doi_prefix", doiPrefix),
+        updateSetting("doi_suffix_pattern", doiSuffixPattern)
+      ]);
       setOpenCreate(false);
       // Reset form
       setVolume("");
@@ -88,24 +124,78 @@ export default function IssuesPage() {
     }
   };
 
-  const handlePublish = async (id: string | number) => {
-    if (!confirm("Apakah Anda yakin ingin menerbitkan edisi ini secara online? Semua naskah di dalamnya akan otomatis berstatus Published.")) return;
+  const handleEditOpen = (issue: Issue) => {
+    const volNum = issue.volume ? issue.volume.replace(/\D/g, "") : "";
+    const numNum = issue.number ? issue.number.replace(/\D/g, "") : "";
+    
+    setVolume(volNum);
+    setNumber(numNum);
+    setYear(issue.year);
+    setTitle(issue.title);
+    setDescription(issue.description || "");
+    setEditingIssue(issue);
+    setOpenEdit(true);
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingIssue || !volume || !number || !year || !title) return;
+    setSubmitting(true);
     try {
-      await publishIssue(id);
+      await Promise.all([
+        updateIssue(editingIssue.id, {
+          volume: `Vol. ${volume}`,
+          number: `Edisi ${number}`,
+          year,
+          title,
+          description,
+        }),
+        updateSetting("doi_prefix", doiPrefix),
+        updateSetting("doi_suffix_pattern", doiSuffixPattern)
+      ]);
+      setOpenEdit(false);
+      setEditingIssue(null);
+      setVolume("");
+      setNumber("");
+      setYear(new Date().getFullYear());
+      setTitle("");
+      setDescription("");
       loadData();
     } catch (err) {
-      console.error("Gagal menerbitkan edisi:", err);
+      console.error("Gagal memperbarui edisi:", err);
+    } finally {
+      setSubmitting(false);
     }
   };
 
+  const handlePublish = async (id: string | number) => {
+    triggerConfirm(
+      "Terbitkan Edisi Secara Online?",
+      "Apakah Anda yakin ingin menerbitkan edisi ini secara online? Semua naskah di dalamnya akan otomatis berstatus Published.",
+      async () => {
+        try {
+          await publishIssue(id);
+          loadData();
+        } catch (err) {
+          console.error("Gagal menerbitkan edisi:", err);
+        }
+      }
+    );
+  };
+
   const handleDelete = async (id: string | number) => {
-    if (!confirm("Apakah Anda yakin ingin menghapus edisi ini?")) return;
-    try {
-      await deleteIssue(id);
-      loadData();
-    } catch (err) {
-      console.error("Gagal menghapus edisi:", err);
-    }
+    triggerConfirm(
+      "Hapus Edisi Jurnal?",
+      "Apakah Anda yakin ingin menghapus edisi ini? Tindakan ini tidak dapat dibatalkan.",
+      async () => {
+        try {
+          await deleteIssue(id);
+          loadData();
+        } catch (err) {
+          console.error("Gagal menghapus edisi:", err);
+        }
+      }
+    );
   };
 
   const handleManageArticles = (issue: Issue) => {
@@ -198,7 +288,14 @@ export default function IssuesPage() {
                     issues.map((issue) => (
                       <TableRow key={issue.id} className="hover:bg-purple-50/30 dark:hover:bg-purple-950/5 transition-colors">
                         <TableCell className="py-4">
-                          <span className="text-[13px] font-black text-foreground">{issue.volume} No. {issue.number}</span>
+                          <span className="text-[13px] font-black text-foreground">
+                            {issue.volume} · {
+                              issue.number.toLowerCase().startsWith("no") || 
+                              issue.number.toLowerCase().startsWith("edisi") 
+                                ? issue.number 
+                                : `No. ${issue.number}`
+                            }
+                          </span>
                           <span className="block text-[10px] font-bold text-muted-foreground uppercase tracking-wider mt-0.5">Tahun {issue.year}</span>
                         </TableCell>
                         <TableCell className="py-4">
@@ -229,30 +326,27 @@ export default function IssuesPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="py-4">
-                          <div className="flex items-center gap-2">
-                            <Button 
-                              variant="outline" 
-                              onClick={() => handleManageArticles(issue)} 
-                              className="h-8 text-[10px] font-black uppercase tracking-wider neo-btn"
-                            >
-                              Atur Naskah
-                            </Button>
-                            {issue.status === "draft" && (
-                              <Button 
-                                onClick={() => handlePublish(issue.id)} 
-                                className="h-8 text-[10px] font-black uppercase tracking-wider bg-emerald-500 text-white hover:bg-emerald-600 border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rounded-lg shrink-0 px-3"
-                              >
-                                <Globe className="w-3.5 h-3.5 mr-1" /> Terbitkan
-                              </Button>
-                            )}
-                            <Button 
-                              variant="outline" 
-                              onClick={() => handleDelete(issue.id)} 
-                              className="h-8 w-8 p-0 border-2 border-black bg-rose-50 hover:bg-rose-100 text-rose-650 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-1px] transition-all"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger className="h-8 px-3 text-[10px] font-black uppercase tracking-wider border-2 border-black bg-white hover:bg-zinc-50 rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:translate-y-[-1px] transition-all cursor-pointer flex items-center gap-1.5 outline-none">
+                              Pilih Aksi <ChevronDown className="w-3 h-3 stroke-[2.5px]" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="font-sans text-xs border-2 border-black bg-white rounded-xl shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] p-1 min-w-[140px] z-50">
+                              <DropdownMenuItem className="font-bold cursor-pointer" onClick={() => handleManageArticles(issue)}>
+                                <FileText className="w-3.5 h-3.5 mr-1.5 text-zinc-500" /> Atur Naskah
+                              </DropdownMenuItem>
+                              <DropdownMenuItem className="font-bold cursor-pointer" onClick={() => handleEditOpen(issue)}>
+                                <Pencil className="w-3.5 h-3.5 mr-1.5 text-zinc-500" /> Edit Edisi
+                              </DropdownMenuItem>
+                              {issue.status === "draft" && (
+                                <DropdownMenuItem className="font-bold cursor-pointer text-emerald-600 focus:text-emerald-700" onClick={() => handlePublish(issue.id)}>
+                                  <Globe className="w-3.5 h-3.5 mr-1.5 text-emerald-600" /> Terbitkan
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem variant="destructive" className="font-bold cursor-pointer" onClick={() => handleDelete(issue.id)}>
+                                <Trash2 className="w-3.5 h-3.5 mr-1.5" /> Hapus Edisi
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                       </TableRow>
                     ))
@@ -266,37 +360,246 @@ export default function IssuesPage() {
 
       {/* Dialog Create Issue */}
       <Dialog open={openCreate} onOpenChange={setOpenCreate}>
-        <DialogContent className="sm:max-w-md font-sans border-3 border-black rounded-2xl shadow-[6px_6px_0px_0px_#000] p-6">
+        <DialogContent className="sm:max-w-2xl font-sans border-3 border-black rounded-2xl shadow-[6px_6px_0px_0px_#000] p-6">
           <DialogHeader>
-            <DialogTitle className="font-black text-lg uppercase tracking-wider text-black">Buat Edisi Jurnal Baru</DialogTitle>
+            <DialogTitle className="font-black text-lg uppercase tracking-wider text-black border-b-2 border-black pb-2">
+              Buat Edisi Jurnal Baru
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleCreate} className="space-y-4 py-2">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-black">Volume (misal: Vol. 5)</Label>
-                <Input value={volume} onChange={(e) => setVolume(e.target.value)} placeholder="Volume..." required className="border-2 border-black rounded-xl h-10" />
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column: Issue Metadata */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase bg-indigo-100 text-indigo-750 px-2 py-0.5 rounded border border-black">Langkah 1</span>
+                  <Label className="text-[10px] font-black uppercase tracking-wider text-black">Informasi Edisi</Label>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Volume (Angka Saja)</Label>
+                    <Input 
+                      type="text"
+                      pattern="[0-9]*"
+                      value={volume} 
+                      onChange={(e) => setVolume(e.target.value.replace(/\D/g, ""))} 
+                      placeholder="Contoh: 12" 
+                      required 
+                      className="border-2 border-black rounded-xl h-9 text-xs font-semibold" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Nomor Edisi (Angka Saja)</Label>
+                    <Input 
+                      type="text"
+                      pattern="[0-9]*"
+                      value={number} 
+                      onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))} 
+                      placeholder="Contoh: 2" 
+                      required 
+                      className="border-2 border-black rounded-xl h-9 text-xs font-semibold" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Tahun Terbit</Label>
+                    <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} required className="border-2 border-black rounded-xl h-9 text-xs font-semibold" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Judul Edisi</Label>
+                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul fokus edisi..." required className="border-2 border-black rounded-xl h-9 text-xs font-semibold" />
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Deskripsi (Opsional)</Label>
+                  <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Deskripsi mengenai edisi terbitan ini..." className="border-2 border-black rounded-xl resize-none min-h-[70px] text-xs font-semibold" />
+                </div>
               </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] font-black uppercase tracking-wider text-black">Nomor (misal: No. 2)</Label>
-                <Input value={number} onChange={(e) => setNumber(e.target.value)} placeholder="Nomor..." required className="border-2 border-black rounded-xl h-10" />
+
+              {/* Right Column: DOI Settings */}
+              <div className="space-y-3 md:border-l-2 md:border-dashed md:border-black/15 md:pl-6">
+                <div className="flex items-center gap-1.5 justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black uppercase bg-purple-100 text-purple-750 px-2 py-0.5 rounded border border-black">Langkah 2</span>
+                    <Label className="text-[10px] font-black uppercase tracking-wider text-purple-750">Pengaturan DOI Jurnal</Label>
+                  </div>
+                  <span className="text-[8px] font-black uppercase bg-zinc-100 text-zinc-700 px-1.5 py-0.5 rounded border border-black">Global</span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Prefix DOI (misal: 10.31258)</Label>
+                    <Input 
+                      value={doiPrefix} 
+                      onChange={(e) => setDoiPrefix(e.target.value)} 
+                      placeholder="10.31258" 
+                      required 
+                      className="border-2 border-black rounded-xl h-9 text-xs font-semibold" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Pola Suffix / Kode Suffix Jurnal</Label>
+                    <Input 
+                      value={doiSuffixPattern} 
+                      onChange={(e) => setDoiSuffixPattern(e.target.value)} 
+                      placeholder="fastjournal" 
+                      required 
+                      className="border-2 border-black rounded-xl h-9 text-xs font-semibold" 
+                    />
+                  </div>
+                  
+                  <div className="bg-purple-50/50 border-2 border-black/15 rounded-xl p-3 space-y-1">
+                    <span className="text-[8px] font-black text-purple-800 uppercase tracking-wider">Live Preview Format DOI Otomatis:</span>
+                    <p className="text-[10px] font-black text-purple-950 break-all select-all bg-white p-2 border border-black rounded-lg">
+                      {doiPrefix}/{doiSuffixPattern}.v{volume.replace(/\D/g, "") || "X"}i{number.replace(/\D/g, "") || "Y"}.[ID_Artikel]
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-wider text-black">Tahun Terbit</Label>
-              <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} required className="border-2 border-black rounded-xl h-10" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-wider text-black">Judul Edisi</Label>
-              <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul fokus edisi..." required className="border-2 border-black rounded-xl h-10" />
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-wider text-black">Deskripsi (Opsional)</Label>
-              <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Deskripsi mengenai edisi terbitan ini..." className="border-2 border-black rounded-xl resize-none min-h-[80px]" />
-            </div>
-            <DialogFooter className="gap-2 pt-4">
-              <Button type="button" variant="outline" onClick={() => setOpenCreate(false)} className="font-sans font-black text-xs uppercase tracking-wider neo-btn h-10 border-2 border-black rounded-xl">Batal</Button>
+
+            <DialogFooter className="gap-2 pt-4 border-t-2 border-black/10 flex justify-end">
+              <Button type="button" variant="outline" onClick={() => setOpenCreate(false)} className="font-sans font-black text-xs uppercase tracking-wider neo-btn h-10 border-2 border-black rounded-xl">
+                Batal
+              </Button>
               <Button type="submit" disabled={submitting} className="text-white font-sans font-black text-xs uppercase tracking-wider neo-btn h-10 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_#000]" style={{ backgroundColor: "#7C3AED" }}>
                 {submitting ? "Membuat..." : "Simpan Edisi"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog Edit Issue */}
+      <Dialog open={openEdit} onOpenChange={(val) => {
+        setOpenEdit(val);
+        if (!val) {
+          setEditingIssue(null);
+          setVolume("");
+          setNumber("");
+          setYear(new Date().getFullYear());
+          setTitle("");
+          setDescription("");
+        }
+      }}>
+        <DialogContent className="sm:max-w-2xl font-sans border-3 border-black rounded-2xl shadow-[6px_6px_0px_0px_#000] p-6">
+          <DialogHeader>
+            <DialogTitle className="font-black text-lg uppercase tracking-wider text-black border-b-2 border-black pb-2">
+              Edit Edisi Jurnal
+            </DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEditSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column: Issue Metadata */}
+              <div className="space-y-3">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-black uppercase bg-indigo-100 text-indigo-750 px-2 py-0.5 rounded border border-black">Langkah 1</span>
+                  <Label className="text-[10px] font-black uppercase tracking-wider text-black">Informasi Edisi</Label>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Volume (Angka Saja)</Label>
+                    <Input 
+                      type="text"
+                      pattern="[0-9]*"
+                      value={volume} 
+                      onChange={(e) => setVolume(e.target.value.replace(/\D/g, ""))} 
+                      placeholder="Contoh: 12" 
+                      required 
+                      className="border-2 border-black rounded-xl h-9 text-xs font-semibold" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Nomor Edisi (Angka Saja)</Label>
+                    <Input 
+                      type="text"
+                      pattern="[0-9]*"
+                      value={number} 
+                      onChange={(e) => setNumber(e.target.value.replace(/\D/g, ""))} 
+                      placeholder="Contoh: 2" 
+                      required 
+                      className="border-2 border-black rounded-xl h-9 text-xs font-semibold" 
+                    />
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Tahun Terbit</Label>
+                    <Input type="number" value={year} onChange={(e) => setYear(Number(e.target.value))} required className="border-2 border-black rounded-xl h-9 text-xs font-semibold" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Judul Edisi</Label>
+                    <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Judul fokus edisi..." required className="border-2 border-black rounded-xl h-9 text-xs font-semibold" />
+                  </div>
+                </div>
+                
+                <div className="space-y-1">
+                  <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Deskripsi (Opsional)</Label>
+                  <Textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Deskripsi mengenai edisi terbitan ini..." className="border-2 border-black rounded-xl resize-none min-h-[70px] text-xs font-semibold" />
+                </div>
+              </div>
+
+              {/* Right Column: DOI Settings */}
+              <div className="space-y-3 md:border-l-2 md:border-dashed md:border-black/15 md:pl-6">
+                <div className="flex items-center gap-1.5 justify-between">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-[10px] font-black uppercase bg-purple-100 text-purple-750 px-2 py-0.5 rounded border border-black">Langkah 2</span>
+                    <Label className="text-[10px] font-black uppercase tracking-wider text-purple-750">Pengaturan DOI Jurnal</Label>
+                  </div>
+                  <span className="text-[8px] font-black uppercase bg-zinc-100 text-zinc-700 px-1.5 py-0.5 rounded border border-black">Global</span>
+                </div>
+                
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Prefix DOI (misal: 10.31258)</Label>
+                    <Input 
+                      value={doiPrefix} 
+                      onChange={(e) => setDoiPrefix(e.target.value)} 
+                      placeholder="10.31258" 
+                      required 
+                      className="border-2 border-black rounded-xl h-9 text-xs font-semibold" 
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-[9px] font-bold uppercase tracking-wider text-zinc-600">Pola Suffix / Kode Suffix Jurnal</Label>
+                    <Input 
+                      value={doiSuffixPattern} 
+                      onChange={(e) => setDoiSuffixPattern(e.target.value)} 
+                      placeholder="fastjournal" 
+                      required 
+                      className="border-2 border-black rounded-xl h-9 text-xs font-semibold" 
+                    />
+                  </div>
+                  
+                  <div className="bg-purple-50/50 border-2 border-black/15 rounded-xl p-3 space-y-1">
+                    <span className="text-[8px] font-black text-purple-800 uppercase tracking-wider">Live Preview Format DOI Otomatis:</span>
+                    <p className="text-[10px] font-black text-purple-950 break-all select-all bg-white p-2 border border-black rounded-lg">
+                      {doiPrefix}/{doiSuffixPattern}.v{volume.replace(/\D/g, "") || "X"}i{number.replace(/\D/g, "") || "Y"}.[ID_Artikel]
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 pt-4 border-t-2 border-black/10 flex justify-end">
+              <Button type="button" variant="outline" onClick={() => {
+                setOpenEdit(false);
+                setEditingIssue(null);
+                setVolume("");
+                setNumber("");
+                setYear(new Date().getFullYear());
+                setTitle("");
+                setDescription("");
+              }} className="font-sans font-black text-xs uppercase tracking-wider neo-btn h-10 border-2 border-black rounded-xl">
+                Batal
+              </Button>
+              <Button type="submit" disabled={submitting} className="text-white font-sans font-black text-xs uppercase tracking-wider neo-btn h-10 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_#000]" style={{ backgroundColor: "#7C3AED" }}>
+                {submitting ? "Menyimpan..." : "Simpan Perubahan"}
               </Button>
             </DialogFooter>
           </form>
@@ -372,6 +675,42 @@ export default function IssuesPage() {
           <DialogFooter className="border-t-2 border-black/10 pt-4">
             <Button onClick={() => setOpenManage(false)} className="w-full font-sans font-black text-xs uppercase tracking-wider neo-btn h-10 border-2 border-black rounded-xl">
               Selesai & Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Confirmation Modal */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md font-sans border-3 border-black rounded-2xl shadow-[6px_6px_0px_0px_#000] p-6">
+          <DialogHeader>
+            <DialogTitle className="font-black text-lg uppercase tracking-wider text-black">
+              {confirmTitle}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-xs font-bold text-zinc-700 uppercase tracking-wide leading-relaxed">
+              {confirmMessage}
+            </p>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              className="font-sans font-black text-[10px] uppercase tracking-wider neo-btn h-10 border-2 border-black rounded-xl"
+            >
+              Batal
+            </Button>
+            <Button
+              type="button"
+              onClick={() => {
+                if (confirmAction) confirmAction();
+                setConfirmOpen(false);
+              }}
+              className="text-white font-sans font-black text-[10px] uppercase tracking-wider neo-btn h-10 border-2 border-black rounded-xl shadow-[3px_3px_0px_0px_#000] bg-rose-500 hover:bg-rose-650 shrink-0 px-4"
+            >
+              Ya, Lanjutkan
             </Button>
           </DialogFooter>
         </DialogContent>

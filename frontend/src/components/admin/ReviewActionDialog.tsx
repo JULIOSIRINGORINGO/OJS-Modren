@@ -98,13 +98,7 @@ export function ReviewActionDialog({
     setSubmitting(true);
     try {
       const newStatus = statusMap[action] || "Under Review";
-      const reviewerInfo =
-        action === "assign"
-          ? selectedReviewers.map((r) => r.name).join(", ")
-          : "";
-      const fullNotes = reviewerInfo
-        ? `${notes}\n\n[Reviewer ditugaskan: ${reviewerInfo}]`
-        : notes;
+      const fullNotes = action === "assign" ? "" : notes;
 
       const reviewerIds = action === "assign"
         ? selectedReviewers.filter(Boolean).map(r => String(r.id))
@@ -337,17 +331,19 @@ export function ReviewActionDialog({
               </div>
             )}
 
-            <div className="space-y-1.5">
-              <Label className="text-[10px] font-black uppercase tracking-wider text-black">
-                Catatan untuk Penulis
-              </Label>
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Tambahkan catatan editorial atau masukan..."
-                className="font-sans text-sm resize-none min-h-[100px] border-2 border-black rounded-xl"
-              />
-            </div>
+            {action !== "assign" && (
+              <div className="space-y-1.5">
+                <Label className="text-[10px] font-black uppercase tracking-wider text-black">
+                  Catatan untuk Penulis
+                </Label>
+                <Textarea
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  placeholder="Tambahkan catatan editorial atau masukan..."
+                  className="font-sans text-sm resize-none min-h-[100px] border-2 border-black rounded-xl"
+                />
+              </div>
+            )}
           </div>
         )}
 

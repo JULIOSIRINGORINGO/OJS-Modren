@@ -9,7 +9,7 @@ function getHeaders(): HeadersInit {
   };
   
   if (typeof window !== "undefined") {
-    const token = sessionStorage.getItem("auth_token");
+    const token = localStorage.getItem("auth_token");
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
@@ -31,8 +31,8 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (!response.ok) {
     if (response.status === 401 && typeof window !== "undefined") {
-      sessionStorage.removeItem("auth_token");
-      sessionStorage.removeItem("auth_user");
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
       if (!window.location.pathname.includes("/masuk")) {
         window.location.href = "/masuk";
       }
@@ -53,8 +53,8 @@ export async function login(email: string, password: string) {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    sessionStorage.setItem("auth_token", data.token);
-    sessionStorage.setItem("auth_user", JSON.stringify(data.user));
+    localStorage.setItem("auth_token", data.token);
+    localStorage.setItem("auth_user", JSON.stringify(data.user));
     return data;
   } catch (error) {
     // Mock authentication fallback for testing when backend is offline
@@ -70,8 +70,8 @@ export async function login(email: string, password: string) {
           role: matchedMock.role.toLowerCase(),
         };
         const mockToken = btoa(mockUser.id.toString());
-        sessionStorage.setItem("auth_token", mockToken);
-        sessionStorage.setItem("auth_user", JSON.stringify(mockUser));
+        localStorage.setItem("auth_token", mockToken);
+        localStorage.setItem("auth_user", JSON.stringify(mockUser));
         console.warn("Backend offline: Falling back to Mock Auth.");
         return { token: mockToken, user: mockUser };
       }
@@ -86,8 +86,8 @@ export async function register(userData: any) {
       method: "POST",
       body: JSON.stringify(userData),
     });
-    sessionStorage.setItem("auth_token", data.token);
-    sessionStorage.setItem("auth_user", JSON.stringify(data.user));
+    localStorage.setItem("auth_token", data.token);
+    localStorage.setItem("auth_user", JSON.stringify(data.user));
     return data;
   } catch (error) {
     // Fallback: Mock registration for testing
@@ -100,21 +100,21 @@ export async function register(userData: any) {
       role: userData.role || "author",
     };
     const mockToken = btoa(mockUser.id.toString());
-    sessionStorage.setItem("auth_token", mockToken);
-    sessionStorage.setItem("auth_user", JSON.stringify(mockUser));
+    localStorage.setItem("auth_token", mockToken);
+    localStorage.setItem("auth_user", JSON.stringify(mockUser));
     console.warn("Backend offline: Falling back to Mock Register.");
     return { token: mockToken, user: mockUser };
   }
 }
 
 export function logout() {
-  sessionStorage.removeItem("auth_token");
-  sessionStorage.removeItem("auth_user");
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("auth_user");
 }
 
 export function getCurrentUser() {
   if (typeof window === "undefined") return null;
-  const userJson = sessionStorage.getItem("auth_user");
+  const userJson = localStorage.getItem("auth_user");
   if (!userJson) return null;
   try {
     return JSON.parse(userJson);
@@ -238,7 +238,7 @@ export async function uploadArticleFile(
   formData.append('file', file);
   formData.append('file_type', fileType);
 
-  const token = typeof window !== "undefined" ? sessionStorage.getItem("auth_token") : null;
+  const token = typeof window !== "undefined" ? localStorage.getItem("auth_token") : null;
   const headers: Record<string, string> = {};
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;

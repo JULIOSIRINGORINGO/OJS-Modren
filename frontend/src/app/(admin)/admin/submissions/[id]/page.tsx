@@ -117,7 +117,7 @@ export default function EditorDecisionPage() {
   }, [action, allReviewers.length]);
 
   const statusMap: Record<string, string> = {
-    approve: "Published",
+    approve: "Production",
     revision: "Revision Required",
     reject: "Rejected",
     assign: "Reviewer Assigned",
@@ -150,13 +150,7 @@ export default function EditorDecisionPage() {
       }
 
       const newStatus = statusMap[action] || "Under Review";
-      const reviewerInfo =
-        action === "assign"
-          ? selectedReviewers.filter(Boolean).map((r) => r.name).join(", ")
-          : "";
-      const fullNotes = reviewerInfo
-        ? `${notes}\n\n[Reviewer ditugaskan: ${reviewerInfo}]`
-        : notes;
+      const fullNotes = action === "assign" ? "" : notes;
 
       const reviewerIds = action === "assign"
         ? selectedReviewers.filter(Boolean).map(r => String(r.id))
@@ -428,7 +422,7 @@ export default function EditorDecisionPage() {
                       <SelectItem value="assign">Reviewer Sedang Ditugaskan</SelectItem>
                       <SelectItem value="revision">Minta Revisi</SelectItem>
                       <SelectItem value="copyedit">Kirim ke Copyediting</SelectItem>
-                      <SelectItem value="approve">Terima &amp; Terbitkan</SelectItem>
+                      <SelectItem value="approve">Terima &amp; Kirim ke Produksi</SelectItem>
                       <SelectItem value="reject">Tolak Naskah</SelectItem>
                     </SelectContent>
                   </Select>
@@ -568,17 +562,19 @@ export default function EditorDecisionPage() {
                   </div>
                 )}
 
-                <div className="space-y-1.5">
-                  <Label className="text-[10px] font-black uppercase tracking-wider text-black">
-                    Catatan untuk Penulis
-                  </Label>
-                  <Textarea
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                    placeholder="Tambahkan catatan editorial atau masukan untuk penulis..."
-                    className="font-sans text-sm resize-none min-h-[120px] border-2 border-black rounded-xl"
-                  />
-                </div>
+                {action !== "assign" && (
+                  <div className="space-y-1.5">
+                    <Label className="text-[10px] font-black uppercase tracking-wider text-black">
+                      Catatan untuk Penulis
+                    </Label>
+                    <Textarea
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
+                      placeholder="Tambahkan catatan editorial atau masukan untuk penulis..."
+                      className="font-sans text-sm resize-none min-h-[120px] border-2 border-black rounded-xl"
+                    />
+                  </div>
+                )}
 
                 <div className="pt-4 border-t-2 border-dashed border-black/10 flex justify-end">
                   <Button

@@ -7,7 +7,7 @@ export const mockArticles: Article[] = [
     abstract:
       "Makalah ini menyelidiki efektivitas model transformer pra-latih yang diadaptasi untuk tugas pemrosesan bahasa Indonesia dengan data berlabel yang terbatas...",
     authors: ["Andi Prasetyo", "Siti Rahayu", "Budi Santoso"],
-    category: "Pemrosesan Bahasa Alami",
+    category: "Sains dan Teknologi",
     keywords: ["NLP", "Transformer", "Bahasa Indonesia", "Sumber Daya Terbatas"],
     submittedAt: "2025-03-12",
     publishedAt: "2025-04-01",
@@ -24,7 +24,7 @@ export const mockArticles: Article[] = [
     abstract:
       "Kami mengusulkan kerangka pembelajaran federasi yang memungkinkan pelatihan model terdistribusi di jaringan rumah sakit tanpa berbagi data pasien mentah...",
     authors: ["Dewi Kusuma", "Reza Firmansyah"],
-    category: "Pembelajaran Mesin",
+    category: "Sains dan Teknologi",
     keywords: ["Pembelajaran Federasi", "Privasi", "Layanan Kesehatan", "Terdistribusi"],
     submittedAt: "2025-04-05",
     status: "Under Review",
@@ -37,7 +37,7 @@ export const mockArticles: Article[] = [
     abstract:
       "Studi ini mengeksplorasi pendekatan berbasis GNN untuk memprediksi tautan sitasi antara makalah akademik menggunakan metadata dan fitur teks...",
     authors: ["Ahmad Fauzi", "Lina Marlina", "Hendra Wijaya"],
-    category: "Ilmu Data",
+    category: "Sains dan Teknologi",
     keywords: ["GNN", "Jaringan Sitasi", "Graf Pengetahuan"],
     submittedAt: "2025-02-28",
     publishedAt: "2025-03-15",
@@ -54,7 +54,7 @@ export const mockArticles: Article[] = [
     abstract:
       "Tinjauan komprehensif metode XAI yang diterapkan pada model penilaian kredit di lembaga keuangan Asia Tenggara...",
     authors: ["Maria Puspita"],
-    category: "AI yang Dapat Dijelaskan",
+    category: "Sains dan Teknologi",
     keywords: ["XAI", "Risiko Kredit", "SHAP", "LIME"],
     submittedAt: "2025-04-18",
     status: "Revision Required",
@@ -65,7 +65,7 @@ export const mockArticles: Article[] = [
     abstract:
       "Menggabungkan fitur teks, gambar, dan audio untuk analisis sentimen yang andal pada dataset Twitter dan Instagram Indonesia...",
     authors: ["Rizki Hamdani", "Yusuf Abdillah"],
-    category: "Pemrosesan Bahasa Alami",
+    category: "Sains dan Teknologi",
     keywords: ["Multimodal", "Analisis Sentimen", "Media Sosial"],
     submittedAt: "2025-05-01",
     status: "Under Review",
@@ -76,7 +76,7 @@ export const mockArticles: Article[] = [
     abstract:
       "Kami menyajikan algoritma penjadwalan baru untuk node tepi yang memproses data sensor IoT frekuensi tinggi dengan batasan latensi...",
     authors: ["Citra Dewi", "Bagus Pramono", "Indra Kusuma"],
-    category: "Sistem Terdistribusi",
+    category: "Sains dan Teknologi",
     keywords: ["Edge Computing", "IoT", "Penjadwalan", "Latensi"],
     submittedAt: "2025-01-20",
     status: "Rejected",
@@ -84,12 +84,7 @@ export const mockArticles: Article[] = [
 ];
 
 export const mockCategories: Category[] = [
-  { id: "1", name: "Ilmu Data", slug: "ilmu-data", icon: "BarChart3", count: 48 },
-  { id: "2", name: "Pemrosesan Bahasa Alami", slug: "pba", icon: "MessageSquare", count: 35 },
-  { id: "3", name: "Pembelajaran Mesin", slug: "pembelajaran-mesin", icon: "Brain", count: 62 },
-  { id: "4", name: "Penglihatan Komputer", slug: "penglihatan-komputer", icon: "Eye", count: 29 },
-  { id: "5", name: "Sistem Terdistribusi", slug: "sistem-terdistribusi", icon: "Network", count: 21 },
-  { id: "6", name: "AI yang Dapat Dijelaskan", slug: "xai", icon: "Lightbulb", count: 17 },
+  { id: "1", name: "Sains dan Teknologi", slug: "sains-dan-teknologi", icon: "Brain", count: 204 },
 ];
 
 export const mockAuthors: Author[] = [

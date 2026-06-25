@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2026_06_18_154931) do
+ActiveRecord::Schema[7.1].define(version: 2026_06_25_040903) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -38,6 +38,7 @@ ActiveRecord::Schema[7.1].define(version: 2026_06_18_154931) do
     t.text "body_text"
     t.string "loa_file"
     t.text "editor_notes"
+    t.string "pages"
     t.index ["category_id"], name: "index_articles_on_category_id"
     t.index ["issue_id"], name: "index_articles_on_issue_id"
     t.index ["user_id"], name: "index_articles_on_user_id"

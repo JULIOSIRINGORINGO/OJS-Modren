@@ -2,17 +2,26 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { fetchArticles, trackArticleDownload } from "@/lib/api-client";
+import { fetchArticles, trackArticleDownload, fetchIssues } from "@/lib/api-client";
 import type { Article } from "@/types";
 import { Eye, Download, BookOpen, Calendar, ArrowUpRight, FolderOpen, Loader2, FileText } from "lucide-react";
 
 export default function IssuesPage() {
   const [articles, setArticles] = useState<Article[]>([]);
+  const [issues, setIssues] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchArticles()
-      .then(setArticles)
+    Promise.all([fetchArticles(), fetchIssues()])
+      .then(([articlesData, issuesData]) => {
+        setArticles(articlesData);
+        const publishedIssues = issuesData.filter((i: any) => i.status === "published" || i.status === "Published");
+        setIssues(publishedIssues);
+      })
+      .catch((err) => {
+        console.error("Gagal memuat data:", err);
+        fetchArticles().then(setArticles);
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -20,11 +29,9 @@ export default function IssuesPage() {
     e.preventDefault();
     e.stopPropagation();
     
-    // If a real PDF file was uploaded, open from backend server
     if (article.file_url && article.file_name?.toLowerCase().endsWith('.pdf')) {
       window.open(`http://localhost:3001${article.file_url}`, "_blank");
     } else {
-      // Fallback to generated PDF galley page
       window.open(`/articles/${article.id}/pdf`, "_blank");
     }
 
@@ -39,37 +46,81 @@ export default function IssuesPage() {
 
   const publishedArticles = articles.filter((a) => a.status === "Published");
 
-  // Build volumes dynamically from articles
-  const volumeMap = new Map<string, Map<string, Article[]>>();
-  articles.forEach((a) => {
-    const vol = a.volume || "Vol. 12";
-    const issue = a.issue || "Edisi 1";
-    if (!volumeMap.has(vol)) volumeMap.set(vol, new Map());
-    const issueMap = volumeMap.get(vol)!;
-    if (!issueMap.has(issue)) issueMap.set(issue, []);
-    issueMap.get(issue)!.push(a);
-  });
+  // Get latest issue
+  const latestIssue = issues && issues.length > 0 ? issues[0] : null;
+  const currentIssueTitle = latestIssue 
+    ? `${latestIssue.volume}, ${latestIssue.number} — ${latestIssue.title}`
+    : "Vol. 12, Edisi 1 (April 2025)";
+  
+  const currentIssueDateText = latestIssue && latestIssue.published_at
+    ? new Date(latestIssue.published_at).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" })
+    : "1 April 2025";
 
-  const volumes = Array.from(volumeMap.entries()).map(([volume, issueMap]) => ({
-    volume,
-    year: volume.includes("12") ? "2025" : volume.includes("11") ? "2024" : "2023",
-    issues: Array.from(issueMap.entries()).map(([label, arts]) => ({
-      label: `${label} (${volume.includes("12") ? "2025" : "2024"})`,
-      articles: arts,
-    })),
-  }));
+  const currentIssueArticles = latestIssue
+    ? publishedArticles.filter((a) => 
+        String(a.issue_id) === String(latestIssue.id) || 
+        (a.volume === latestIssue.volume && a.issue === latestIssue.number)
+      )
+    : publishedArticles.filter((a) => a.volume === "Vol. 12" && a.issue === "Edisi 1");
 
-  // Add empty older volume if not present
-  if (!volumeMap.has("Vol. 11")) {
-    volumes.push({
-      volume: "Vol. 11",
-      year: "2024",
-      issues: [
-        { label: "Edisi 2 (Oktober 2024)", articles: [] },
-        { label: "Edisi 1 (Juli 2024)", articles: [] },
-      ],
+  // Build volumes dynamically from published issues/articles
+  const volumeMap = new Map<string, Map<string, { id: string, label: string, articles: Article[], year: string }>>();
+
+  if (issues && issues.length > 0) {
+    issues.forEach((issue) => {
+      const vol = issue.volume || "Vol. 12";
+      const issueNum = issue.number || "Edisi 1";
+      const year = String(issue.year || new Date().getFullYear());
+      
+      if (!volumeMap.has(vol)) {
+        volumeMap.set(vol, new Map());
+      }
+      const issueMap = volumeMap.get(vol)!;
+      
+      const issueArticles = publishedArticles.filter((a) => 
+        String(a.issue_id) === String(issue.id) || 
+        (a.volume === issue.volume && a.issue === issue.number)
+      );
+
+      issueMap.set(issueNum, {
+        id: issue.id,
+        label: `${issueNum} (${year})`,
+        articles: issueArticles,
+        year
+      });
+    });
+  } else {
+    publishedArticles.forEach((a) => {
+      const vol = a.volume || "";
+      const issue = a.issue || "";
+      const year = String(a.year || new Date().getFullYear());
+      
+      if (!volumeMap.has(vol)) {
+        volumeMap.set(vol, new Map());
+      }
+      const issueMap = volumeMap.get(vol)!;
+      if (!issueMap.has(issue)) {
+        issueMap.set(issue, { id: issue, label: `${issue} (${year})`, articles: [], year });
+      }
+      issueMap.get(issue)!.articles.push(a);
     });
   }
+
+  const volumes = Array.from(volumeMap.entries()).map(([volumeName, issueMap]) => {
+    const firstIssueData = Array.from(issueMap.values())[0];
+    const year = firstIssueData ? firstIssueData.year : new Date().getFullYear().toString();
+    
+    return {
+      volume: volumeName,
+      year,
+      issues: Array.from(issueMap.values()).map((data) => ({
+        label: data.label,
+        articles: data.articles,
+      })),
+    };
+  });
+
+  volumes.sort((a, b) => b.volume.localeCompare(a.volume));
 
   return (
     <div className="pb-24">
@@ -114,32 +165,39 @@ export default function IssuesPage() {
         ) : (
           <>
             {/* Current Issue Card (Terbitan Terkini) */}
-            <div className="bg-white border-[3px] border-black p-6 sm:p-10 mb-16 shadow-[8px_8px_0px_0px_#000]">
-              
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b-[3px] border-black pb-6 mb-8 gap-4">
+            <details className="bg-white border-[3px] border-black shadow-[8px_8px_0px_0px_#000] mb-16 group/latest overflow-hidden block">
+              <summary className="flex flex-col sm:flex-row sm:items-center justify-between p-6 sm:p-10 cursor-pointer hover:bg-purple-50/20 transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
                 <div>
                   <div className="inline-flex items-center gap-1.5 px-3 py-1 border-2 border-black bg-yellow-200 text-black text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_0px_#000] mb-3">
                     <Calendar className="w-3.5 h-3.5 stroke-[2.5px]" />
                     TERBITAN TERKINI
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-black mt-1">
-                    Vol. 12, Edisi 2 (April 2025)
+                    {currentIssueTitle}
                   </h2>
                   <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-500 mt-1">
-                    Diterbitkan secara resmi: 1 April 2025 · Total {publishedArticles.length} Karya Ilmiah
+                    Diterbitkan secara resmi: {currentIssueDateText} · Total {currentIssueArticles.length} Karya Ilmiah
                   </p>
                 </div>
                 
-                <div>
+                <div className="flex items-center gap-4 mt-4 sm:mt-0">
                   <span className="inline-flex items-center justify-center px-4 py-1.5 border-[3px] border-black bg-emerald-300 text-black text-xs font-black uppercase tracking-wider shadow-[3px_3px_0px_0px_#000]">
                     AKTIF / TERBARU
                   </span>
+                  <span className="text-xs font-black uppercase tracking-wider border-2 border-black bg-white px-3 py-1.5 shadow-[2px_2px_0px_0px_#000] group-open/latest:rotate-90 transition-transform inline-block">
+                    &rarr;
+                  </span>
                 </div>
-              </div>
+              </summary>
 
               {/* Published Articles List */}
-              <div className="space-y-6">
-                {publishedArticles.map((article) => (
+              <div className="p-6 sm:p-10 border-t-[3px] border-black bg-zinc-50/30 space-y-6">
+                {currentIssueArticles.length === 0 ? (
+                  <p className="text-xs text-zinc-500 italic font-bold uppercase tracking-wider py-12 text-center border-2 border-dashed border-black/10 rounded-xl bg-zinc-50/50">
+                    Belum ada karya ilmiah yang diterbitkan pada edisi ini.
+                  </p>
+                ) : (
+                  currentIssueArticles.map((article) => (
                   <div
                     key={article.id}
                     className="bg-white border-[3px] border-black p-6 shadow-[4px_4px_0px_0px_#000] hover:translate-x-[-2px] hover:translate-y-[-2px] hover:shadow-[6px_6px_0px_0px_#000] transition-all group"
@@ -161,6 +219,11 @@ export default function IssuesPage() {
                           {article.doi && (
                             <span className="inline-block text-[10px] font-black uppercase tracking-widest text-zinc-400 bg-zinc-50 border border-black px-2 py-0.5">
                               DOI: {article.doi}
+                            </span>
+                          )}
+                          {article.pages && (
+                            <span className="inline-block text-[10px] font-black uppercase tracking-widest text-zinc-400 bg-zinc-50 border border-black px-2 py-0.5">
+                              Halaman: {article.pages}
                             </span>
                           )}
                           <button
@@ -195,10 +258,9 @@ export default function IssuesPage() {
 
                     </div>
                   </div>
-                ))}
+                )))}
               </div>
-
-            </div>
+            </details>
 
             {/* Archives Section */}
             <div>
@@ -230,32 +292,65 @@ export default function IssuesPage() {
                     
                     <div className="p-6 sm:p-8 space-y-4 bg-zinc-50">
                       {vol.issues.map((issue) => (
-                        <div
+                        <details
                           key={issue.label}
-                          className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border-2 border-black bg-white shadow-[2px_2px_0px_0px_#000] gap-3"
+                          className="bg-white border-2 border-black shadow-[2px_2px_0px_0px_#000] group/issue overflow-hidden block mb-4 last:mb-0"
                         >
-                          <div className="flex items-center gap-2.5">
-                            <span className="w-2.5 h-2.5 bg-purple-500 border border-black rounded-full" />
-                            <span className="text-xs sm:text-sm font-black uppercase tracking-wide text-black">
-                              {issue.label}
-                            </span>
-                          </div>
+                          <summary className="flex flex-col sm:flex-row sm:items-center justify-between p-4 cursor-pointer hover:bg-zinc-50 transition-colors select-none list-none [&::-webkit-details-marker]:hidden">
+                            <div className="flex items-center gap-2.5">
+                              <span className="w-2.5 h-2.5 bg-purple-500 border border-black rounded-full" />
+                              <span className="text-xs sm:text-sm font-black uppercase tracking-wide text-black">
+                                {issue.label}
+                              </span>
+                            </div>
+                            
+                            <div>
+                              {issue.articles.length > 0 ? (
+                                <span
+                                  className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-purple-600"
+                                >
+                                  {issue.articles.length} Artikel
+                                  <span className="group-open/issue:rotate-90 transition-transform inline-block">&rarr;</span>
+                                </span>
+                              ) : (
+                                <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
+                                  Belum Ada Artikel (Segera Hadir)
+                                </span>
+                              )}
+                            </div>
+                          </summary>
                           
-                          <div>
-                            {issue.articles.length > 0 ? (
-                              <span
-                                className="inline-flex items-center gap-1.5 text-xs font-black uppercase tracking-wider text-purple-600"
-                              >
-                                {issue.articles.length} Artikel
-                                <ArrowUpRight className="w-3.5 h-3.5 stroke-[2.5px]" />
-                              </span>
-                            ) : (
-                              <span className="text-xs font-bold uppercase tracking-wider text-zinc-400">
-                                Belum Ada Artikel (Segera Hadir)
-                              </span>
-                            )}
-                          </div>
-                        </div>
+                          {issue.articles.length > 0 && (
+                            <div className="p-4 sm:p-6 border-t-2 border-black bg-zinc-50/50 space-y-4">
+                              {issue.articles.map((article) => (
+                                <div
+                                  key={article.id}
+                                  className="bg-white border-2 border-black p-4 shadow-[2px_2px_0px_0px_#000] flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-xl"
+                                >
+                                  <div className="flex-1 min-w-0 space-y-1">
+                                    <Link href={`/articles/${article.id}`}>
+                                      <h4 className="text-xs sm:text-sm font-black uppercase tracking-tight text-black hover:text-purple-650 transition-colors leading-snug">
+                                        {article.title}
+                                      </h4>
+                                    </Link>
+                                    <p className="text-[10px] text-zinc-500 font-bold uppercase">
+                                      Oleh: <span className="text-black font-extrabold">{article.authors.join(", ")}</span>
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <button
+                                      onClick={(e) => handleDownload(article, e)}
+                                      className="inline-flex h-8 items-center gap-1.5 px-3.5 rounded-xl border-2 border-black bg-red-100 hover:bg-red-200 text-black font-black uppercase tracking-wider text-[10px] shadow-[2px_2px_0px_0px_#000] active:translate-x-0 active:translate-y-0 transition-all cursor-pointer"
+                                    >
+                                      <FileText className="w-3.5 h-3.5 text-red-700 stroke-[2.5px]" />
+                                      PDF
+                                    </button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </details>
                       ))}
                     </div>
                   </details>

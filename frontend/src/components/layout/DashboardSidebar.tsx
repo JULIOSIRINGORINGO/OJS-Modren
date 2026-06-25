@@ -16,9 +16,10 @@ import { getCurrentUser, logout } from "@/lib/api-client";
 
 const authorNavItems = [
   { label: "Ikhtisar", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Artikel Terbit", href: "/dashboard/articles", icon: BookOpen },
   { label: "Kirim Naskah", href: "/dashboard/submissions/new", icon: UploadCloud },
   { label: "Naskah Saya", href: "/dashboard/submissions", icon: FileText },
-  { label: "Tinjauan Saya", href: "/dashboard/reviews", icon: BookOpen },
+  { label: "Tinjauan Saya", href: "/dashboard/reviews", icon: ClipboardCheck },
   { label: "Penanda", href: "/dashboard/bookmarks", icon: Bookmark },
   { label: "Pesan & Diskusi", href: "/dashboard/messages", icon: MessageSquare },
   { label: "Profil Saya", href: "/dashboard/profile", icon: User },
@@ -27,6 +28,7 @@ const authorNavItems = [
 
 const reviewerNavItems = [
   { label: "Ikhtisar", href: "/dashboard", icon: LayoutDashboard },
+  { label: "Artikel Terbit", href: "/dashboard/articles", icon: BookOpen },
   { label: "Tinjauan Saya", href: "/dashboard/reviews", icon: ClipboardCheck },
   { label: "Riwayat Tinjauan", href: "/dashboard/reviews?filter=completed", icon: History },
   { label: "Profil Saya", href: "/dashboard/profile", icon: User },
@@ -35,6 +37,7 @@ const reviewerNavItems = [
 
 const adminNavItems = [
   { label: "Ikhtisar", href: "/admin", icon: LayoutDashboard },
+  { label: "Artikel Terbit", href: "/dashboard/articles", icon: BookOpen },
   { label: "Naskah", href: "/admin/submissions", icon: FileText },
   { label: "Pesan & Diskusi", href: "/dashboard/messages", icon: MessageSquare },
   { label: "Edisi Jurnal", href: "/admin/issues", icon: Library },

@@ -47,13 +47,15 @@ class Api::BookmarksController < ApplicationController
       category: article.category&.name || 'Umum',
       keywords: article.keywords.to_s.split(',').map(&:strip),
       submittedAt: article.submitted_at&.strftime('%Y-%m-%d'),
-      publishedAt: article.published_at&.strftime('%Y-%m-%d'),
+      publishedAt: article.published_at&.strftime('%Y-%m-%d') || (article.issue&.published_at || article.created_at)&.strftime('%Y-%m-%d'),
       status: article.status,
-      doi: article.doi,
+      doi: article.display_doi,
       views: article.views,
       downloads: article.downloads,
-      issue: article.issue,
-      volume: article.volume
+      issue: article.display_issue,
+      volume: article.display_volume,
+      year: article.display_year,
+      pages: article.pages || ''
     }
   end
 end

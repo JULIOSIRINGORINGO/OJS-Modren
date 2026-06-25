@@ -168,7 +168,7 @@ class Api::ArticlesController < ApplicationController
               # Sent by editor to author
               subject = "Pembaruan Status Naskah: #{article.title}"
               body = "Halo #{article.user.first_name},\n\nStatus naskah Anda yang berjudul \"#{article.title}\" telah diperbarui dari \"#{old_status}\" menjadi \"#{article.status}\"."
-              if params[:notes].present?
+              if params[:notes].present? && !['Reviewer Assigned', 'Under Review', 'Submitted'].include?(article.status)
                 body += "\n\nCatatan Editor:\n#{params[:notes]}"
               end
               body += "\n\nSalam hangat,\nRedaksi FAST-Journal"
@@ -353,13 +353,15 @@ class Api::ArticlesController < ApplicationController
       references: article.references || '',
       body_text: article.body_text || '',
       submittedAt: article.submitted_at&.strftime('%Y-%m-%d'),
-      publishedAt: article.published_at&.strftime('%Y-%m-%d'),
+      publishedAt: article.published_at&.strftime('%Y-%m-%d') || (article.issue&.published_at || article.created_at)&.strftime('%Y-%m-%d'),
       status: article.status,
-      doi: article.doi,
+      doi: article.display_doi,
       views: article.views,
       downloads: article.downloads,
-      issue: article.issue ? article.issue.number : (article.read_attribute(:issue) || ''),
-      volume: article.issue ? article.issue.volume : (article.read_attribute(:volume) || ''),
+      issue: article.display_issue,
+      volume: article.display_volume,
+      year: article.display_year,
+      pages: article.pages || '',
       user_id: article.user_id,
       round: article.round || 1,
       file_name: article.file_name,
