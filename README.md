@@ -95,3 +95,8 @@ Pastikan Anda sudah menginstal [Node.js](https://nodejs.org/) (versi 18 ke atas 
 ---
 
 *Dibuat dengan penuh dedikasi untuk memodernisasi ekosistem akademis Universitas Prima Indonesia (UNPRI).*
+
+---
+
+_Dokumen ini diperbarui untuk tujuan pengujian kontributor baru._
+
