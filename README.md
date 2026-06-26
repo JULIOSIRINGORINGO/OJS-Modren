@@ -98,5 +98,5 @@ Pastikan Anda sudah menginstal [Node.js](https://nodejs.org/) (versi 18 ke atas 
 
 ---
 
-_Dokumen ini diperbarui untuk tujuan pengujian kontributor baru._
+_Dokumen ini diperbarui untuk tujuan verifikasi alur kerja kolaborasi multipihak pada proyek Modern OJS._
 
