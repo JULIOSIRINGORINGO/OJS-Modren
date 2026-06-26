@@ -1,3 +1,4 @@
+# Verification note: User model representing platform members and role definitions
 class User < ApplicationRecord
   has_secure_password
 
